@@ -352,7 +352,10 @@ function update(dt){
     let tx=n.tx, ty=n.ty;
     if(n.type==='job'){
       if(mode==='mixed' && n.severity>0){
-        if(isLandscape() && mixedTargets[n.id]!==undefined){
+        if(isLandscape() && n.id==='worker'){
+          tx=cx;
+          ty=cy + Math.min(W*.060,H*.19);
+        }else if(isLandscape() && mixedTargets[n.id]!==undefined){
           const a=mixedTargets[n.id];
           const ring=n.severity===2?mixedRing:mixedRing*1.08;
           tx=cx + Math.cos(a)*ring;
@@ -365,13 +368,13 @@ function update(dt){
           tx=cx + (mp.x-cx)*toward;
           ty=cy + (mp.y-cy)*toward;
         }else if(!isLandscape() && n.id==='worker'){
-          // 共通Workerは媒体に属さないためCore直下。
+          // 共通Workerは媒体に属さないため、単独停止と同じ第一外枠付近へ。
           tx=cx;
-          ty=cy + Math.min(W,H)*.245;
+          ty=cy + Math.min(W,H)*.185;
         }
       }else if(mode==='twinowCritical' && n.id==='t_pay'){
         const mp=mediaPos(media.find(m=>m.id==='twinow'));
-        const toward=isLandscape()?.50:.52;
+        const toward=isLandscape()?.48:.50;
         tx=cx + (mp.x-cx)*toward;
         ty=cy + (mp.y-cy)*toward;
       }else if(mode==='foundiaWarn' && n.id==='f_img'){
@@ -412,11 +415,13 @@ function update(dt){
     // Priority Coreの数字・リングへ重要ノードを重ねない。
     if(n.type==='job' && (n.severity||0)>0){
       const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
-      const baseSafe = mode==='mixed'
-        ? (isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.195:.155))
-        : mode==='workerFail'
-          ? (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*(W<500?.145:.13))
-          : (isLandscape()?Math.min(W*.078,H*.23):Math.min(W,H)*(W<500?.17:.145));
+      const baseSafe = (mode==='mixed' && n.id==='worker')
+        ? (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*(W<500?.145:.13))
+        : mode==='mixed'
+          ? (isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.195:.155))
+          : mode==='workerFail'
+            ? (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*(W<500?.145:.13))
+            : (isLandscape()?Math.min(W*.078,H*.23):Math.min(W,H)*(W<500?.17:.145));
       const safe=baseSafe+(n.r||10);
       if(d<safe){
         const push=(safe-d)/d;
