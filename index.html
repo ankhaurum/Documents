@@ -286,7 +286,7 @@ function rebuild(){
       ty=p.y+Math.sin(a)*orbit;
     }
     const o=old.get(j.id);
-    nodes.push({...j,type:'job',x:o?.x??tx+(Math.random()-.5)*12,y:o?.y??ty+(Math.random()-.5)*12,vx:o?.vx??0,vy:o?.vy??0,tx,ty,r:9+Math.min(j.count,4)*2.3});
+    nodes.push({...j,type:'job',x:o?.x??tx+(Math.random()-.5)*12,y:o?.y??ty+(Math.random()-.5)*12,vx:o?.vx??0,vy:o?.vy??0,tx,ty,r:18});
   });
 }
 
@@ -362,13 +362,20 @@ function coreVisualRadius(){
     : Math.min(W,H)*(W<500?.105:.09);
 }
 
+function jobBodyRadius(n){
+  return isLandscape()?16:18;
+}
+
+function jobRingCount(n){
+  // 件数は本体サイズではなく外周リング数で表現。
+  return Math.max(1,Math.min(Number(n.count)||1,5));
+}
+
 function jobVisualOuterRadius(n){
-  const s=n.severity||0;
-  const scale=s===2?1.35:s===1?1.12:1;
-  // 重大/停止はパルス外周の最大値まで含めて判定。
-  const pulseMax=s===2?1.09:1;
-  const outerRing=s===2?8:2;
-  return (n.r||10)*scale*pulseMax + outerRing;
+  const body=jobBodyRadius(n);
+  const rings=jobRingCount(n);
+  // 最外周リング + 軽いパルス分までを見た目の外周として扱う。
+  return body + 7 + (rings-1)*4 + 2;
 }
 
 function priorityOuterGap(n){
@@ -605,37 +612,57 @@ function drawMedia(n){
 }
 function drawJob(n){
   const s=n.severity||0, col=severityColor(s);
-  const pulse=s===2 ? 1+Math.sin(performance.now()/230)*.09 : 1;
-  const r=n.r*(s===2?1.35:s===1?1.12:1)*pulse;
+  const r=jobBodyRadius(n);
+  const rings=jobRingCount(n);
+  const t=performance.now()/1000;
+  const pulse=(Math.sin(t*3.1 + hash(n.id)%17)+1)/2;
 
   if(n.media!=='system' && s>0){
     const m=nodes.find(x=>x.id===n.media);
-    // 因子→媒体の線は、媒体→Priority Coreと同じ太さ・媒体色・不透明度に統一。
+    // 因子→媒体の線は、媒体→Priority Coreと同じ太さ・媒体色・不透明度。
     ctx.save();ctx.strokeStyle=hexAlpha(m.color,.16);ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(n.x,n.y);ctx.stroke();ctx.restore();
   }
 
   ctx.save();
-  if(s>0){
-    const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*2.5);
-    g.addColorStop(0,hexAlpha(col,s===2?.24:.15));g.addColorStop(1,hexAlpha(col,0));
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,r*2.5,0,Math.PI*2);ctx.fill();
-  }
-  ctx.fillStyle='rgba(8,18,29,.88)';ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle=hexAlpha(col,s===0?.42:.88);ctx.lineWidth=s===2?1.7:1;ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.stroke();
 
-  if(s===2){
-    ctx.strokeStyle=hexAlpha(col,.30);ctx.lineWidth=1;ctx.beginPath();ctx.arc(n.x,n.y,r+6+Math.sin(performance.now()/250)*2,0,Math.PI*2);ctx.stroke();
+  // 件数が増えるほど外側のグローだけを少し強める。本体円は固定。
+  if(s>0){
+    const outer=jobVisualOuterRadius(n);
+    const glow=ctx.createRadialGradient(n.x,n.y,r*.45,n.x,n.y,outer*1.65);
+    const strength=Math.min(.10 + rings*.035,.28);
+    glow.addColorStop(0,hexAlpha(col,strength));
+    glow.addColorStop(1,hexAlpha(col,0));
+    ctx.fillStyle=glow;
+    ctx.beginPath();ctx.arc(n.x,n.y,outer*1.65,0,Math.PI*2);ctx.fill();
+  }
+
+  // 固定サイズの本体。
+  ctx.fillStyle='rgba(8,18,29,.92)';
+  ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=hexAlpha(col,.90);
+  ctx.lineWidth=s===2?1.7:1.4;
+  ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.stroke();
+
+  // 件数 = 外周リング数。重大・停止・警告すべて同じルール。
+  for(let i=0;i<rings;i++){
+    const rr=r+7+i*4 + (i===rings-1 ? pulse*2 : 0);
+    const alpha=Math.max(.10,.31-i*.045);
+    ctx.strokeStyle=hexAlpha(col,alpha);
+    ctx.lineWidth=i===0?1.1:.9;
+    ctx.beginPath();ctx.arc(n.x,n.y,rr,0,Math.PI*2);ctx.stroke();
   }
 
   const showLabel = s>0 || (W>650 && !isLandscape());
   if(showLabel){
     const font=`${s===2?'700':'600'} ${W<430?9:10}px -apple-system, sans-serif`;
-    const tw=textWidth(n.label,font)+14;
-    const y=n.y+r+8;
-    ctx.fillStyle='rgba(5,12,19,.82)';roundRect(n.x-tw/2,y,tw,20,10);ctx.fill();
+    const label=n.label;
+    const tw=textWidth(label,font)+14;
+    const y=n.y+jobVisualOuterRadius(n)+5;
+    ctx.fillStyle='rgba(5,12,19,.82)';
+    roundRect(n.x-tw/2,y,tw,20,10);ctx.fill();
     ctx.strokeStyle=hexAlpha(col,.26);ctx.stroke();
-    ctx.fillStyle=s===0?'#b8c9d5':'#eef8ff';ctx.font=font;ctx.textAlign='center';ctx.fillText(n.label,n.x,y+13.5);
+    ctx.fillStyle='#eef8ff';ctx.font=font;ctx.textAlign='center';ctx.fillText(label,n.x,y+13.5);
   }
   ctx.restore();
 }
@@ -660,11 +687,14 @@ function activateCanvasPoint(clientX,clientY){
     return true;
   }
 
-  // Larger touch radius on phones so small moving nodes remain easy to tap.
-  const extra=W<640?24:14;
+  // 因子は中央の固定円だけがタップ対象。外周リング/グローは見た目専用。
   const hits=nodes
     .map(n=>({n,d:Math.hypot(n.x-x,n.y-y)}))
-    .filter(h=>h.d<Math.max((h.n.r||12)+extra,30))
+    .filter(h=>{
+      if(h.n.type==='media') return h.d<=(h.n.r||26);
+      if(h.n.type==='job') return h.d<=jobBodyRadius(h.n);
+      return false;
+    })
     .sort((a,b)=>{
       const sev=(b.n.severity||0)-(a.n.severity||0);
       return sev!==0?sev:a.d-b.d;
