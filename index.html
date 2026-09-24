@@ -138,6 +138,24 @@ footer button.active{color:#eafcff;border-color:rgba(124,233,255,.45);background
  .priority{max-width:calc(100vw - 16px)}
  footer button{padding:9px 10px}
 }
+@media (orientation:landscape) and (max-height:560px){
+  header{padding:7px 12px 4px}
+  .logo{width:28px;height:28px}
+  .brandtxt strong{font-size:11px}
+  .brandtxt span{font-size:8px}
+  #stage{overflow:hidden}
+  .hud{left:8px;right:8px;top:6px}
+  .priority{max-width:310px;padding:7px 9px;border-radius:11px}
+  .priority .kicker{font-size:7px}
+  .priority .title{font-size:11px;line-height:1.25}
+  .priority .meta{font-size:8px;margin-top:2px}
+  .pulse-note{font-size:8px;margin-top:4px}
+  .legend{display:none}
+  #detail{left:8px;right:auto;width:min(360px,42vw);bottom:8px;max-height:72%;overflow:auto}
+  footer{justify-content:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+  footer button{min-height:36px;padding:7px 11px;font-size:9px}
+  #hibiki{right:12px;bottom:12px;width:38px;height:38px}
+}
 </style>
 </head>
 <body>
@@ -220,18 +238,31 @@ let W=0,H=0,cx=0,cy=0,mode='twinowCritical',last=performance.now();
 let selected=null;
 let priorityCount=1;
 
+function isLandscape(){
+  return W>H*1.35;
+}
 function resize(){
   const r=stage.getBoundingClientRect();
   W=r.width; H=r.height;
   canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  cx=W/2; cy=H*0.53;
+  if(isLandscape()){
+    // 左にPriority説明領域を残し、Field本体を右側へ展開。
+    cx=W*0.64; cy=H*0.55;
+  }else{
+    cx=W/2; cy=H*0.53;
+  }
   rebuild();
 }
 window.addEventListener('resize',resize);
 
 function mediaPos(m){
+  if(isLandscape()){
+    const rx=Math.min(W*.255,285);
+    const ry=Math.min(H*.31,118);
+    return {x:cx+Math.cos(m.angle)*rx, y:cy+Math.sin(m.angle)*ry};
+  }
   const rad = Math.min(W,H) * (W<500 ? .31 : .34);
   return {x:cx+Math.cos(m.angle)*rad, y:cy+Math.sin(m.angle)*rad*.72};
 }
@@ -240,7 +271,7 @@ function rebuild(){
   nodes = [];
   media.forEach(m=>{
     const p=mediaPos(m);
-    nodes.push({...m,type:'media',x:old.get(m.id)?.x??p.x,y:old.get(m.id)?.y??p.y,vx:0,vy:0,tx:p.x,ty:p.y,r:W<500?26:31});
+    nodes.push({...m,type:'media',x:old.get(m.id)?.x??p.x,y:old.get(m.id)?.y??p.y,vx:0,vy:0,tx:p.x,ty:p.y,r:isLandscape()?24:(W<500?26:31)});
   });
   jobs.forEach((j,i)=>{
     let tx,ty;
@@ -301,8 +332,12 @@ function severityColor(s){return s===2?'#ff677b':s===1?'#ffd86a':'#59d98e'}
 
 function update(dt){
   const activeCritical = nodes.filter(n=>n.type==='job' && n.severity===2);
-  const coreR = Math.min(W,H)*(W<500?.12:.10);
-  const mixedRing = Math.min(W,H)*(W<500?.205:.16);
+  const coreR = isLandscape()
+    ? Math.min(W*.075,H*.22)
+    : Math.min(W,H)*(W<500?.12:.10);
+  const mixedRing = isLandscape()
+    ? Math.min(W*.13,H*.30)
+    : Math.min(W,H)*(W<500?.205:.16);
   const mixedTargets = {
     t_img:-0.78,
     f_art:0.22,
@@ -348,7 +383,7 @@ function update(dt){
     // 複合時はPriority Coreの周囲を予約領域にする。
     if(mode==='mixed' && n.type==='job'){
       const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
-      const safe=Math.min(W,H)*(W<500?.175:.14)+(n.r||10);
+      const safe=(isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.175:.14))+(n.r||10);
       if(d<safe){
         const push=(safe-d)/d;
         n.x+=dx*push;
@@ -409,7 +444,7 @@ function draw(){
 
   // core rings
   const t=performance.now()/1000;
-  const base=Math.min(W,H)*(W<500?.105:.09);
+  const base=isLandscape()?Math.min(W*.055,H*.18):Math.min(W,H)*(W<500?.105:.09);
   for(let i=0;i<3;i++){
     ctx.save();
     ctx.strokeStyle=`rgba(124,233,255,${.18-i*.045})`;
@@ -505,7 +540,7 @@ function activateCanvasPoint(clientX,clientY){
 
   // Priority Coreは常に最優先のタップ対象。
   // スマホでは見た目より少し広い判定にして、中央数字・リングのどこを押しても開く。
-  const coreHitR=Math.min(W,H)*(W<500?.18:.145);
+  const coreHitR=isLandscape()?Math.min(W*.085,H*.27):Math.min(W,H)*(W<500?.18:.145);
   if(Math.hypot(x-cx,y-cy)<=coreHitR){
     showCoreDetail();
     return true;
