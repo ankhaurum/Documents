@@ -185,6 +185,7 @@ footer button.active{color:#eafcff;border-color:rgba(124,233,255,.45);background
 </div>
 
 <footer>
+  <button id="refreshBtn" class="refresh" aria-label="最新情報に更新" title="最新情報に更新">↻</button>
   <button data-mode="twinowCritical">重大</button>
   <button data-mode="workerFail">停止</button>
   <button data-mode="foundiaWarn">警告</button>
@@ -264,15 +265,20 @@ function rebuild(){
   });
   jobs.forEach((j,i)=>{
     let tx,ty;
-    if(j.media==='system'){tx=cx;ty=cy+Math.min(W,H)*.25;}
-    else{
+    if(j.media==='system'){
+      tx=cx;ty=cy+Math.min(W,H)*.22;
+    }else{
       const m=media.find(x=>x.id===j.media), p=mediaPos(m);
-      const off=(i%3-1)*0.55;
-      tx=p.x+Math.cos(m.angle+Math.PI/2)*42*off;
-      ty=p.y+Math.sin(m.angle+Math.PI/2)*42*off;
+      const siblings=jobs.filter(x=>x.media===j.media);
+      const localIndex=siblings.findIndex(x=>x.id===j.id);
+      const spread=(localIndex-(siblings.length-1)/2)*0.72;
+      const orbit=isLandscape()?46:(W<500?50:54);
+      const a=m.angle+Math.PI/2+spread;
+      tx=p.x+Math.cos(a)*orbit;
+      ty=p.y+Math.sin(a)*orbit;
     }
     const o=old.get(j.id);
-    nodes.push({...j,type:'job',x:o?.x??tx+(Math.random()-.5)*24,y:o?.y??ty+(Math.random()-.5)*24,vx:o?.vx??0,vy:o?.vy??0,tx,ty,r:9+Math.min(j.count,4)*2.3});
+    nodes.push({...j,type:'job',x:o?.x??tx+(Math.random()-.5)*12,y:o?.y??ty+(Math.random()-.5)*12,vx:o?.vx??0,vy:o?.vy??0,tx,ty,r:9+Math.min(j.count,4)*2.3});
   });
 }
 
@@ -307,15 +313,26 @@ function setMode(next){
   document.getElementById('priorityTitle').textContent=title;
   document.getElementById('priorityMeta').textContent=meta;
   document.getElementById('priorityPulse').style.display=human?'inline-flex':'none';
-  document.querySelectorAll('footer button').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
+  document.querySelectorAll('footer button[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
   document.getElementById('detail').classList.remove('show');
   rebuild();
 }
 
-document.querySelectorAll('footer button').forEach(b=>{
+document.querySelectorAll('footer button[data-mode]').forEach(b=>{
   b.addEventListener('click',()=>setMode(b.dataset.mode));
   b.addEventListener('touchend',e=>{e.preventDefault();setMode(b.dataset.mode);},{passive:false});
 });
+document.getElementById('refreshBtn').addEventListener('click',()=>{
+  const u=new URL(window.location.href);
+  u.searchParams.set('refresh',Date.now().toString());
+  window.location.replace(u.toString());
+});
+document.getElementById('refreshBtn').addEventListener('touchend',e=>{
+  e.preventDefault();
+  const u=new URL(window.location.href);
+  u.searchParams.set('refresh',Date.now().toString());
+  window.location.replace(u.toString());
+},{passive:false});
 
 function severityColor(s){return s===2?'#ff677b':s===1?'#ffd86a':'#59d98e'}
 
@@ -364,7 +381,7 @@ function update(dt){
         ty=cy + (mp.y-cy)*toward;
       }else if(mode==='workerFail' && n.id==='worker'){
         tx=cx;
-        ty=cy + (isLandscape()?Math.min(W*.09,H*.27):Math.min(W,H)*.245);
+        ty=cy + (isLandscape()?Math.min(W*.075,H*.23):Math.min(W,H)*.215);
       }else if(n.severity===2){
         const a = n.id==='worker' ? 1.45 : (hash(n.id)%628)/100;
         tx=cx + Math.cos(a)*coreR*.92;
@@ -432,21 +449,21 @@ function update(dt){
           const overlap=min-d;
           const ux=dx/d, uy=dy/d;
 
-          if(mode==='mixed' && isLandscape()){
-            // Media circles are the visual anchors, so move jobs more than media.
+          if(hasMedia || priority){
+            // Media circles are anchors. Move job/issue nodes away strongly in all modes.
             if(a.type==='media' && b.type!=='media'){
-              b.x+=ux*overlap*.92; b.y+=uy*overlap*.92;
-              a.x-=ux*overlap*.08; a.y-=uy*overlap*.08;
+              b.x+=ux*overlap*.94; b.y+=uy*overlap*.94;
+              a.x-=ux*overlap*.06; a.y-=uy*overlap*.06;
             }else if(b.type==='media' && a.type!=='media'){
-              a.x-=ux*overlap*.92; a.y-=uy*overlap*.92;
-              b.x+=ux*overlap*.08; b.y+=uy*overlap*.08;
+              a.x-=ux*overlap*.94; a.y-=uy*overlap*.94;
+              b.x+=ux*overlap*.06; b.y+=uy*overlap*.06;
             }else{
               a.x-=ux*overlap*.50; a.y-=uy*overlap*.50;
               b.x+=ux*overlap*.50; b.y+=uy*overlap*.50;
             }
-            a.vx*=.45; a.vy*=.45; b.vx*=.45; b.vy*=.45;
+            a.vx*=.42; a.vy*=.42; b.vx*=.42; b.vy*=.42;
           }else{
-            const strength=mode==='mixed'?.075:.018;
+            const strength=mode==='mixed'?.075:.028;
             const f=overlap/d*strength*dt;
             a.x-=dx*f; a.y-=dy*f;
             b.x+=dx*f; b.y+=dy*f;
@@ -666,22 +683,56 @@ function showCoreDetail(){
 }
 
 function showDetail(n){
-  document.getElementById('detailAction').textContent='この項目を開く';
-  document.getElementById('detailText').style.display='';
   const isMedia=n.type==='media';
-  document.getElementById('detailTitle').textContent=isMedia?n.label:`${n.label} — ${n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||''}`;
-  document.getElementById('detailText').textContent=isMedia?`${n.label}の稼働領域。関連するJob・異常・確認事項が周囲に集まり、優先度が上がるとPriority Coreへ浮上します。`:n.desc;
-  const tags=document.getElementById('detailTags'); tags.innerHTML='';
-  const arr=isMedia?['媒体領域','タップで詳細へ']:[n.severity===2?'優先対応':n.severity===1?'注意':'正常',`件数 ${n.count||1}`,n.media==='system'?'媒体横断':'媒体内'];
+  const detailText=document.getElementById('detailText');
+  const tags=document.getElementById('detailTags');
+  const list=document.getElementById('detailList');
+  tags.innerHTML='';
+  list.innerHTML='';
+
+  if(isMedia){
+    document.getElementById('detailTitle').textContent=n.label;
+    detailText.textContent='';
+    detailText.style.display='none';
+
+    const mediaJobs=nodes
+      .filter(x=>x.type==='job' && x.media===n.id)
+      .sort((a,b)=>(b.severity||0)-(a.severity||0) || a.label.localeCompare(b.label,'ja'));
+    const attention=mediaJobs.filter(x=>(x.severity||0)>0).length;
+
+    [`項目 ${mediaJobs.length}件`, attention?`要確認 ${attention}件`:'要確認 0件']
+      .forEach(t=>{
+        const s=document.createElement('span');
+        s.className='tag';
+        s.textContent=t;
+        tags.appendChild(s);
+      });
+
+    mediaJobs.forEach((job,idx)=>{
+      const r=document.createElement('div');r.className='row';
+      const key=document.createElement('div');key.className='key';
+      key.textContent=job.severity===2?'重大':job.severity===1?'注意':'通常';
+      const val=document.createElement('div');val.className='val';
+      val.textContent=`${idx+1}. ${job.label}｜${job.count||1}件`;
+      r.append(key,val);list.appendChild(r);
+    });
+
+    document.getElementById('detailAction').textContent='媒体を開く';
+    document.getElementById('detail').classList.add('show');
+    return;
+  }
+
+  document.getElementById('detailAction').textContent='この項目を開く';
+  detailText.style.display='';
+  document.getElementById('detailTitle').textContent=`${n.label} — ${n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||''}`;
+  detailText.textContent=n.desc;
+
+  const arr=[n.severity===2?'優先対応':n.severity===1?'注意':'正常',`件数 ${n.count||1}`,n.media==='system'?'媒体横断':'媒体内'];
   arr.forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent=t;tags.appendChild(s)});
 
-  const list=document.getElementById('detailList'); list.innerHTML='';
-  const mediaName=isMedia?n.label:(n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||'');
-  const severity=isMedia?'媒体':(n.severity===2?'重大 / 優先対応':n.severity===1?'注意':'正常');
-  const rows=isMedia
-    ? [['対象',n.label],['状態','媒体領域'],['役割','関連Job・異常・確認事項の集約']]
-    : [['重要度',severity],['件数',`${n.count||1}件`],['対象',mediaName],['内容',n.desc]];
-  rows.forEach(([k,v])=>{
+  const mediaName=n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||'';
+  const severity=n.severity===2?'重大 / 優先対応':n.severity===1?'注意':'正常';
+  [['重要度',severity],['件数',`${n.count||1}件`],['対象',mediaName],['内容',n.desc]].forEach(([k,v])=>{
     const r=document.createElement('div');r.className='row';
     const key=document.createElement('div');key.className='key';key.textContent=k;
     const val=document.createElement('div');val.className='val';val.textContent=v;
