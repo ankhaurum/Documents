@@ -272,7 +272,7 @@ function rebuild(){
   nodes = [];
   media.forEach(m=>{
     const p=mediaPos(m);
-    nodes.push({...m,type:'media',x:old.get(m.id)?.x??p.x,y:old.get(m.id)?.y??p.y,vx:0,vy:0,tx:p.x,ty:p.y,r:isLandscape()?24:(W<500?26:31)});
+    nodes.push({...m,type:'media',x:old.get(m.id)?.x??p.x,y:old.get(m.id)?.y??p.y,vx:0,vy:0,tx:p.x,ty:p.y,r:isLandscape()?27:(W<500?30:35)});
   });
   jobs.filter(j=>(j.severity||0)>0).forEach((j,i)=>{
     let tx,ty;
