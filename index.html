@@ -270,8 +270,10 @@ function mediaPos(m){
     const ry=Math.min(H*.31,118);
     return {x:cx+Math.cos(m.angle)*rx, y:cy+Math.sin(m.angle)*ry};
   }
-  const rad = Math.min(W,H) * (W<500 ? .31 : .34);
-  return {x:cx+Math.cos(m.angle)*rad, y:cy+Math.sin(m.angle)*rad*.72};
+  // 縦向きは媒体の重力圏をCoreから一段外側へ。
+  const rad = Math.min(W,H) * (W<500 ? .40 : .38);
+  const yScale = W<500 ? .90 : .82;
+  return {x:cx+Math.cos(m.angle)*rad, y:cy+Math.sin(m.angle)*rad*yScale};
 }
 function rebuild(){
   const old = new Map(nodes.map(n=>[n.id,n]));
@@ -347,17 +349,29 @@ function update(dt){
     : Math.min(W,H)*(W<500?.205:.16);
   const mixedTargets = isLandscape()
     ? { t_img:-1.28, f_art:0.20, worker:1.78 }
-    : { t_img:-0.78, f_art:0.22, worker:1.58 };
+    : null;
 
   for(const n of nodes){
     let tx=n.tx, ty=n.ty;
     if(n.type==='job'){
-      if(mode==='mixed' && n.severity>0 && mixedTargets[n.id]!==undefined){
-        // 複合時の3件はCoreの周囲に三角配置。中央件数や互いの円へ重ならせない。
-        const a=mixedTargets[n.id];
-        const ring=n.severity===2?mixedRing:mixedRing*1.08;
-        tx=cx + Math.cos(a)*ring;
-        ty=cy + Math.sin(a)*ring*.92;
+      if(mode==='mixed' && n.severity>0){
+        if(isLandscape() && mixedTargets[n.id]!==undefined){
+          const a=mixedTargets[n.id];
+          const ring=n.severity===2?mixedRing:mixedRing*1.08;
+          tx=cx + Math.cos(a)*ring;
+          ty=cy + Math.sin(a)*ring*.92;
+        }else if(!isLandscape() && (n.id==='t_img' || n.id==='f_art')){
+          // 媒体起点からCoreへ浮上していることが位置だけで分かるようにする。
+          const mediaId=n.id==='t_img'?'twinow':'foundia';
+          const mp=mediaPos(media.find(m=>m.id===mediaId));
+          const toward=.62;
+          tx=cx + (mp.x-cx)*toward;
+          ty=cy + (mp.y-cy)*toward;
+        }else if(!isLandscape() && n.id==='worker'){
+          // 共通Workerは媒体に属さないためCore直下。
+          tx=cx;
+          ty=cy + Math.min(W,H)*.245;
+        }
       }else if(n.severity===2){
         const a = n.id==='worker' ? 1.45 : (hash(n.id)%628)/100;
         tx=cx + Math.cos(a)*coreR*.92;
@@ -388,7 +402,7 @@ function update(dt){
     // 複合時はPriority Coreの周囲を予約領域にする。
     if(mode==='mixed' && n.type==='job'){
       const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
-      const safe=(isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.175:.14))+(n.r||10);
+      const safe=(isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.195:.155))+(n.r||10);
       if(d<safe){
         const push=(safe-d)/d;
         n.x+=dx*push;
@@ -610,10 +624,9 @@ function showCoreDetail(){
 
   selected=null;
   document.getElementById('detailTitle').textContent=`Priority Core — 優先対応 ${priorityJobs.length}件`;
-  document.getElementById('detailText').textContent=
-    priorityJobs.length
-      ? '現在、人間が確認すべき項目を優先度順に表示しています。'
-      : '現在、優先対応が必要な項目はありません。';
+  const detailText=document.getElementById('detailText');
+  detailText.textContent='';
+  detailText.style.display='none';
 
   const tags=document.getElementById('detailTags');
   tags.innerHTML='';
@@ -654,6 +667,7 @@ function showCoreDetail(){
 
 function showDetail(n){
   document.getElementById('detailAction').textContent='この項目を開く';
+  document.getElementById('detailText').style.display='';
   const isMedia=n.type==='media';
   document.getElementById('detailTitle').textContent=isMedia?n.label:`${n.label} — ${n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||''}`;
   document.getElementById('detailText').textContent=isMedia?`${n.label}の稼働領域。関連するJob・異常・確認事項が周囲に集まり、優先度が上がるとPriority Coreへ浮上します。`:n.desc;
