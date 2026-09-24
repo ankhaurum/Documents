@@ -1,326 +1,531 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Aifate HUB — Priority Field Mobile Tap Final</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Aifate HUB — Priority Field Final Demo Mobile</title>
 <style>
 :root{
-  --bg:#071018; --text:#edf7ff; --muted:#8fa5b7;
-  --cyan:#72e7ff; --ok:#59d98e; --warn:#ffd86a; --danger:#ff687c;
-  --violet:#b79cff; --orange:#ffb26b; --pink:#ff8fce; --green:#71dfa4; --yellow:#ffe06d;
+  --bg:#071018;
+  --panel:rgba(11,22,34,.72);
+  --line:rgba(255,255,255,.10);
+  --text:#ecf6ff;
+  --muted:#8ea5b8;
+  --ok:#59d98e;
+  --warn:#ffd86a;
+  --danger:#ff677b;
+  --core:#7ce9ff;
+  --shadow: 0 18px 50px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
-html,body{
-  margin:0;height:100%;overflow:hidden;
-  background:
-    radial-gradient(circle at 50% 22%,rgba(53,125,185,.14),transparent 34%),
-    linear-gradient(180deg,#071018,#04090e);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
-  -webkit-text-size-adjust:100%;
-}
-body{display:flex;flex-direction:column}
-input.mode{position:absolute;opacity:0;pointer-events:none}
+html,body{height:100%;margin:0;overscroll-behavior:none;background:
+radial-gradient(circle at 50% 22%, rgba(54,126,184,.14), transparent 34%),
+linear-gradient(180deg,#071018 0%,#04090e 100%);
+color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;overflow:hidden}
+button{font:inherit}
+#app{height:100%;display:grid;grid-template-rows:auto 1fr auto}
 header{
-  height:54px;flex:0 0 54px;padding:9px 12px 5px;
-  display:flex;align-items:center;justify-content:space-between;z-index:30
+ display:flex;align-items:center;justify-content:space-between;
+ padding:14px 16px 8px;position:relative;z-index:20
 }
-.brand{display:flex;align-items:center;gap:8px}
+.brand{display:flex;align-items:center;gap:10px}
 .logo{
-  width:31px;height:31px;border-radius:50%;display:grid;place-items:center;
-  border:1px solid rgba(114,231,255,.5);
-  box-shadow:0 0 20px rgba(114,231,255,.12) inset,0 0 18px rgba(114,231,255,.08)
+ width:34px;height:34px;border:1px solid rgba(124,233,255,.55);border-radius:50%;
+ display:grid;place-items:center;box-shadow:0 0 24px rgba(124,233,255,.18) inset,0 0 18px rgba(124,233,255,.14)
 }
-.logo:before{content:"A";font-weight:800}
-.brand strong{display:block;font-size:12px;letter-spacing:.08em}
-.brand span{display:block;font-size:8px;color:var(--muted);margin-top:1px}
-.live{display:flex;align-items:center;gap:6px;font-size:9px;color:#a9bbc8}
-.live i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px rgba(89,217,142,.8)}
-.stage{
-  position:relative;flex:1 1 auto;min-height:0;margin:0 7px;
-  border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;
-  background:
-    radial-gradient(circle at 50% 48%,rgba(114,231,255,.05),transparent 29%),
-    rgba(5,12,19,.80);
-}
-.scene{display:none;position:absolute;inset:0}
-#twinow:checked ~ .app .scene.twinow,
-#foundia:checked ~ .app .scene.foundia,
-#worker:checked ~ .app .scene.worker,
-#mixed:checked ~ .app .scene.mixed{display:block}
-
-.grid{
-  position:absolute;inset:0;opacity:.22;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
-  background-size:38px 38px;
-  mask-image:radial-gradient(circle at center,#000 28%,transparent 82%);
-  -webkit-mask-image:radial-gradient(circle at center,#000 28%,transparent 82%)
-}
-.orbit{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  border:1px solid rgba(120,190,230,.095);border-radius:50%;pointer-events:none
-}
-.o1{width:43%;aspect-ratio:1}.o2{width:70%;aspect-ratio:1}.o3{width:96%;aspect-ratio:1}
-
+.logo:before{content:"A";font-weight:700;letter-spacing:-1px}
+.brandtxt strong{display:block;font-size:14px;letter-spacing:.08em}
+.brandtxt span{display:block;color:var(--muted);font-size:10px;margin-top:1px}
+.live{display:flex;align-items:center;gap:7px;color:#a9bbca;font-size:11px}
+.live i{width:7px;height:7px;background:var(--ok);border-radius:50%;box-shadow:0 0 12px rgba(89,217,142,.8)}
+#stage{position:relative;min-height:0;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.vignette{position:absolute;inset:0;pointer-events:none;background:
+radial-gradient(circle at center,transparent 44%,rgba(0,0,0,.25) 100%)}
 .hud{
-  position:absolute;left:9px;top:8px;right:9px;z-index:50;pointer-events:none
+ position:absolute;left:12px;right:12px;top:8px;display:flex;justify-content:space-between;
+ align-items:flex-start;pointer-events:none;z-index:10
 }
-.card{
-  width:min(78vw,360px);padding:8px 10px;border-radius:12px;
-  background:rgba(8,18,29,.66);border:1px solid rgba(255,255,255,.10);
-  backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)
+.priority{
+ max-width:min(74vw,460px);background:rgba(8,18,29,.58);backdrop-filter:blur(12px);
+ border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow)
 }
-.kicker{font-size:8px;color:#8fa6b7;letter-spacing:.16em;text-transform:uppercase}
-.hud-title{font-size:12px;font-weight:750;line-height:1.35;margin-top:2px}
-.hud-meta{font-size:9px;color:#9cb0c0;margin-top:3px}
-.human{display:inline-flex;gap:6px;align-items:center;font-size:9px;color:#d0dde6;margin-top:5px}
-.human i{width:6px;height:6px;border-radius:50%;background:var(--danger);box-shadow:0 0 10px rgba(255,104,124,.75)}
-
-.links{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
-.links path,.links line{
-  fill:none;stroke:rgba(171,204,226,.20);stroke-width:1.25;vector-effect:non-scaling-stroke
+.priority .kicker{font-size:9px;color:#8da4b6;letter-spacing:.18em;text-transform:uppercase}
+.priority .title{font-size:14px;font-weight:700;margin-top:3px;line-height:1.4}
+.priority .meta{font-size:10px;color:#9db1c1;margin-top:3px}
+.pulse-note{
+ margin-top:7px;display:inline-flex;gap:6px;align-items:center;font-size:10px;color:#c8d8e4
 }
-.links .hot{stroke:rgba(255,104,124,.76);stroke-width:2.1}
-.links .warn{stroke:rgba(255,216,106,.72);stroke-width:1.9}
-.links .cross{stroke:rgba(183,156,255,.70);stroke-width:2}
-
-.core{
-  position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
-  width:112px;height:112px;border-radius:50%;z-index:35;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-  background:radial-gradient(circle at 50% 43%,rgba(29,71,91,.98),rgba(7,18,28,.98) 69%);
-  border:1px solid rgba(114,231,255,.62);
-  box-shadow:0 0 0 10px rgba(114,231,255,.035),0 0 34px rgba(114,231,255,.17);
-  animation:corePulse 3.6s ease-in-out infinite
+.pulse-note b{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--danger);box-shadow:0 0 12px rgba(255,103,123,.8)}
+.legend{
+ margin-top:4px;padding:8px 9px;border-radius:12px;background:rgba(8,18,29,.46);
+ border:1px solid var(--line);backdrop-filter:blur(10px);font-size:9px;color:#9fb2c1
 }
-.core:after{
-  content:"";position:absolute;inset:-10px;border:1px solid rgba(114,231,255,.10);
-  border-radius:50%
+.legend div{display:flex;align-items:center;gap:6px;margin:3px 0}
+.sw{width:7px;height:7px;border-radius:50%}
+.sw.ok{background:var(--ok)} .sw.warn{background:var(--warn)} .sw.danger{background:var(--danger)}
+#detail{
+ position:absolute;left:12px;right:12px;bottom:10px;z-index:25;
+ background:rgba(8,18,29,.86);border:1px solid rgba(255,255,255,.13);border-radius:16px;
+ padding:12px 13px 13px;backdrop-filter:blur(18px);box-shadow:var(--shadow);
+ transform:translateY(calc(100% + 24px));opacity:0;transition:.25s ease;pointer-events:none
 }
-.core .c-label{font-size:8px;letter-spacing:.13em;color:#9bd9e7}
-.core .count{font-size:32px;line-height:.95;font-weight:850;margin:5px 0 1px;position:relative;z-index:4}
-.core .unit{font-size:9px;color:#a8bac8}
-.core .caption{font-size:9px;color:#e2eef5;margin-top:5px;font-weight:700}
-@keyframes corePulse{50%{box-shadow:0 0 0 14px rgba(114,231,255,.025),0 0 43px rgba(114,231,255,.22)}}
-
-.media{
-  --mc:var(--cyan);
-  position:absolute;width:68px;height:68px;border-radius:50%;z-index:8;
-  display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;
-  font-size:9px;font-weight:750;line-height:1.1;color:#edf8ff;
-  border:1px solid color-mix(in srgb,var(--mc),transparent 60%);
-  background:radial-gradient(circle,color-mix(in srgb,var(--mc),transparent 82%),rgba(7,15,23,.88) 70%);
-  box-shadow:0 0 28px color-mix(in srgb,var(--mc),transparent 82%);
-  animation:floatMedia 6s ease-in-out infinite
+#detail.show{transform:translateY(0);opacity:1;pointer-events:auto}
+#detail .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#detail h3{font-size:14px;margin:0}
+#detail .close{border:0;background:rgba(255,255,255,.07);color:#d6e2eb;border-radius:50%;width:28px;height:28px}
+#detail p{font-size:11px;line-height:1.55;color:#9fb2c1;margin:6px 0 0}
+#detail .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tag{font-size:9px;padding:5px 7px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07)}
+#detail .list{margin-top:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:7px}
+#detail .row{display:grid;grid-template-columns:72px 1fr;gap:9px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:10px}
+#detail .row:last-child{border-bottom:0}
+#detail .key{color:#7891a5}
+#detail .val{color:#e4f0f7;font-weight:600;min-width:0;overflow-wrap:anywhere}
+#detail .action{margin-top:10px;width:100%;border:1px solid rgba(124,233,255,.38);background:rgba(124,233,255,.09);color:#dffaff;border-radius:11px;padding:9px 10px;font-weight:650}
+footer{
+ display:flex;gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+ overflow:auto;position:relative;z-index:40;background:linear-gradient(180deg,rgba(4,9,14,0),rgba(4,9,14,.92) 26%)
 }
-@keyframes floatMedia{0%,100%{translate:0 0}50%{translate:0 -4px}}
-.m-twinow{--mc:var(--cyan);left:10%;top:19%}
-.m-foundia{--mc:var(--violet);right:10%;top:19%;animation-delay:-1s}
-.m-carwhip{--mc:var(--orange);left:8%;bottom:16%;animation-delay:-2.4s}
-.m-crypto{--mc:var(--yellow);right:8%;bottom:16%;animation-delay:-3.3s}
-.m-smap{--mc:var(--green);left:50%;top:8%;transform:translateX(-50%);animation-delay:-1.7s}
-.m-ai{--mc:var(--pink);left:50%;bottom:5%;transform:translateX(-50%);animation-delay:-4s}
-
-.job{
-  --jc:#dce8f1;--ring:var(--ok);
-  position:absolute;width:18px;height:18px;border-radius:50%;z-index:14;
-  background:var(--jc);border:1.5px solid var(--ring);
-  box-shadow:0 0 15px color-mix(in srgb,var(--ring),transparent 67%);
-  animation:floatJob 4.8s ease-in-out infinite
+footer button{
+ flex:0 0 auto;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);
+ color:#b9c9d6;border-radius:999px;padding:9px 12px;font-size:10px;min-height:40px;
+ -webkit-tap-highlight-color:transparent;touch-action:manipulation
 }
-@keyframes floatJob{0%,100%{translate:0 0}50%{translate:3px -4px}}
-.j-t1{--jc:var(--cyan);left:24%;top:34%}
-.j-t2{--jc:var(--cyan);left:15%;top:43%;animation-delay:-1.2s}
-.j-t3{--jc:var(--cyan);left:29%;top:45%;animation-delay:-2.1s}
-.j-f1{--jc:var(--violet);right:27%;top:34%;animation-delay:-.8s}
-.j-f2{--jc:var(--violet);right:16%;top:43%;animation-delay:-1.7s}
-.j-c1{--jc:var(--orange);left:18%;bottom:28%;animation-delay:-2.8s}
-.j-cr1{--jc:var(--yellow);right:18%;bottom:28%;animation-delay:-.9s}
-.j-s1{--jc:var(--green);left:46%;top:21%;animation-delay:-1.5s}
-.j-a1{--jc:var(--pink);left:52%;bottom:18%;animation-delay:-2.4s}
-
-.issue{
-  position:absolute;z-index:29;
+footer button.active{color:#eafcff;border-color:rgba(124,233,255,.45);background:rgba(124,233,255,.10)}
+#hibiki{
+ position:absolute;right:13px;bottom:74px;z-index:19;width:44px;height:44px;border-radius:50%;
+ border:1px solid rgba(124,233,255,.35);background:
+ radial-gradient(circle at 40% 35%,rgba(124,233,255,.20),rgba(11,23,35,.88) 64%);
+ color:#dffaff;font-size:10px;font-weight:700;display:grid;place-items:center;
+ box-shadow:0 0 28px rgba(124,233,255,.10);backdrop-filter:blur(10px)
 }
-.issue-toggle{
-  position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;
+#hibiki:after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid rgba(124,233,255,.08)}
+@media(min-width:800px){
+ header{padding:18px 24px 10px}
+ .priority{margin-left:10px}
+ .legend{margin-right:10px}
+ #detail{left:auto;right:24px;width:370px;bottom:20px}
+ footer{justify-content:center}
+ #hibiki{right:28px;bottom:86px}
 }
-.issue-hit{
-  display:block;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  padding:10px;margin:-10px;border-radius:50%;
+@media(max-width:640px){
+ header{padding:10px 12px 6px}
+ .brand{gap:8px}
+ .logo{width:30px;height:30px}
+ .brandtxt strong{font-size:12px}
+ .brandtxt span{font-size:8px}
+ .live{font-size:9px}
+ .legend{display:none}
+ .hud{left:8px;right:8px;top:5px}
+ .priority{max-width:calc(100vw - 16px);padding:8px 10px;border-radius:12px}
+ .priority .kicker{font-size:8px}
+ .priority .title{font-size:12px;line-height:1.35}
+ .priority .meta{font-size:9px}
+ .pulse-note{font-size:9px;margin-top:5px}
+ #detail{left:8px;right:8px;bottom:8px;border-radius:14px;max-height:58%;overflow:auto;-webkit-overflow-scrolling:touch}
+ #detail h3{font-size:13px}
+ #detail p{font-size:10px}
+ #detail .row{grid-template-columns:64px 1fr;font-size:10px}
+ footer{gap:6px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));scrollbar-width:none}
+ footer::-webkit-scrollbar{display:none}
+ footer button{padding:9px 12px;font-size:10px;min-height:40px}
+ #hibiki{right:10px;bottom:68px;width:42px;height:42px}
 }
-.issue-bubble{
-  position:relative;width:34px;height:34px;border-radius:50%;
-  display:grid;place-items:center;text-align:center;padding:4px;
-  font-size:8px;font-weight:800;line-height:1.05;color:#fff;
-  background:#12202c;border:2px solid var(--ring);
-  box-shadow:0 0 22px color-mix(in srgb,var(--ring),transparent 58%);
-  animation:issuePulse 2.3s ease-in-out infinite
-}
-.issue-bubble:after{
-  content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid color-mix(in srgb,var(--ring),transparent 68%)
-}
-.issue-bubble .badge{
-  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
-  white-space:nowrap;font-size:9px;color:#f5fbff;text-shadow:0 1px 6px #000
-}
-@keyframes issuePulse{50%{scale:1.07}}
-
-.detail{
-  display:none;position:fixed;left:8px;right:8px;
-  bottom:calc(66px + env(safe-area-inset-bottom));z-index:200;
-  border:1px solid rgba(255,255,255,.13);border-radius:15px;
-  background:rgba(8,18,29,.97);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
-  box-shadow:0 18px 60px rgba(0,0,0,.58);
-  padding:12px 13px 13px;color:#eaf4fa
-}
-.issue-toggle:checked ~ .detail{display:block}
-.detail h3{font-size:13px;margin:0 34px 7px 0}
-.detail-close{
-  position:absolute;right:9px;top:8px;width:30px;height:30px;border-radius:50%;
-  display:grid;place-items:center;cursor:pointer;touch-action:manipulation;
-  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
-  color:#eaf4fa;font-size:18px;line-height:1;-webkit-tap-highlight-color:transparent
-}
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-.chip{font-size:9px;padding:4px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);color:#c8d6df}
-.detail .rows{border-top:1px solid rgba(255,255,255,.08)}
-.detail .row{display:grid;grid-template-columns:64px 1fr;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:10px}
-.detail .key{color:#7e96a9}
-.detail .val{font-weight:650;color:#edf7fb}
-.detail .next{font-size:10px;margin-top:8px;color:#b8cad6}
-.detail .next b{color:var(--cyan)}
-
-.issue.twinow-critical{left:35%;top:49%;--ring:var(--danger)}
-.issue.foundia-warning{left:62%;top:46%;--ring:var(--warn)}
-.issue.worker-critical{left:50%;top:66%;transform:translateX(-50%);--ring:var(--danger)}
-.issue.worker-warning{left:50%;top:65%;transform:translateX(-50%);--ring:var(--warn)}
-
-.mixed .issue.twinow-critical{left:35%;top:49%}
-.mixed .issue.foundia-warning{left:62%;top:45%}
-.mixed .issue.worker-warning{left:49%;top:65%}
-
-.hibiki{
-  position:absolute;right:10px;bottom:10px;z-index:55;width:40px;height:40px;border-radius:50%;
-  display:grid;place-items:center;font-size:9px;font-weight:800;color:#dffaff;
-  border:1px solid rgba(114,231,255,.28);
-  background:radial-gradient(circle at 40% 35%,rgba(114,231,255,.16),rgba(10,20,30,.92) 65%);
-  box-shadow:0 0 24px rgba(114,231,255,.09)
-}
-
-.controls{
-  flex:0 0 auto;height:62px;display:flex;gap:6px;align-items:center;
-  padding:7px 8px calc(7px + env(safe-area-inset-bottom));overflow-x:auto;
-  background:linear-gradient(180deg,rgba(4,9,14,0),rgba(4,9,14,.96) 34%);
-  scrollbar-width:none
-}
-.controls::-webkit-scrollbar{display:none}
-.controls label{
-  flex:0 0 auto;min-height:40px;display:flex;align-items:center;
-  padding:9px 12px;border-radius:999px;cursor:pointer;touch-action:manipulation;
-  background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);
-  color:#b9c9d6;font-size:10px;-webkit-tap-highlight-color:transparent
-}
-#twinow:checked ~ .app .controls label[for=twinow],
-#foundia:checked ~ .app .controls label[for=foundia],
-#worker:checked ~ .app .controls label[for=worker],
-#mixed:checked ~ .app .controls label[for=mixed]{
-  color:#effcff;border-color:rgba(114,231,255,.46);background:rgba(114,231,255,.10)
-}
-
 @media(max-width:380px){
-  .media{width:60px;height:60px;font-size:8px}
-  .core{width:104px;height:104px}
-  .hud-title{font-size:11px}
-  .card{padding:7px 9px}
+ .brandtxt span{display:none}
+ .priority .meta{display:none}
+ .priority{max-width:calc(100vw - 16px)}
+ footer button{padding:9px 10px}
 }
 </style>
 </head>
 <body>
-<input class="mode" id="twinow" name="mode" type="radio" checked>
-<input class="mode" id="foundia" name="mode" type="radio">
-<input class="mode" id="worker" name="mode" type="radio">
-<input class="mode" id="mixed" name="mode" type="radio">
-
-<div class="app" style="height:100%;display:flex;flex-direction:column">
+<div id="app">
 <header>
-  <div class="brand"><div class="logo"></div><div><strong>AIFATE HUB</strong><span>PRIORITY FIELD / LIVE OPERATIONS</span></div></div>
-  <div class="live"><i></i>LIVE</div>
+  <div class="brand">
+    <div class="logo"></div>
+    <div class="brandtxt"><strong>AIFATE HUB</strong><span>PRIORITY FIELD / LIVE OPERATIONS</span></div>
+  </div>
+  <div class="live"><i></i><span>LIVE</span></div>
 </header>
 
-<div class="stage">
-  <section class="scene twinow">
-    <div class="grid"></div><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
-    <div class="hud"><div class="card"><div class="kicker">Priority Core</div><div class="hud-title">Twinow：決済エラーを最優先で確認</div><div class="hud-meta">影響範囲：店舗ポータル / 決済フロー</div><div class="human"><i></i>人間判断が必要</div></div></div>
-    <svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <line class="hot" x1="21" y1="25" x2="39" y2="52"/><line x1="21" y1="25" x2="17" y2="44"/><line x1="21" y1="25" x2="29" y2="46"/>
-      <line x1="78" y1="25" x2="73" y2="35"/><line x1="78" y1="25" x2="84" y2="44"/>
-      <line x1="15" y1="78" x2="20" y2="72"/><line x1="85" y1="78" x2="80" y2="72"/><line x1="50" y1="13" x2="47" y2="22"/><line x1="50" y1="89" x2="53" y2="82"/>
-      <line class="hot" x1="39" y1="52" x2="50" y2="52"/>
-    </svg>
-    <div class="core"><div class="c-label">PRIORITY CORE</div><div class="count">1</div><div class="unit">優先対応</div><div class="caption">Twinow重大</div></div>
-    <div class="media m-twinow">Twinow</div><div class="media m-foundia">Foundia</div><div class="media m-carwhip">carwhip</div><div class="media m-crypto">crypto-jp</div><div class="media m-smap">smaphomeister</div><div class="media m-ai">ai-trades</div>
-    <div class="job j-t2"></div><div class="job j-t3"></div><div class="job j-f1"></div><div class="job j-f2"></div><div class="job j-c1"></div><div class="job j-cr1"></div><div class="job j-s1"></div><div class="job j-a1"></div>
-    <div class="issue twinow-critical"><input class="issue-toggle" id="issue-toggle-1" type="checkbox"><label class="issue-hit" for="issue-toggle-1" aria-label="詳細を表示"><div class="issue-bubble">決済<span class="badge">決済エラー</span></div></label><div class="detail"><label class="detail-close" for="issue-toggle-1" aria-label="閉じる">×</label><h3>Twinow｜決済エラー</h3><div class="chips"><span class="chip">重要度：重大</span><span class="chip">件数：1件</span><span class="chip">対象：Twinow</span></div><div class="rows"><div class="row"><div class="key">内容</div><div class="val">店舗側の決済処理で異常を検知</div></div><div class="row"><div class="key">影響</div><div class="val">店舗ポータル / 決済フロー</div></div><div class="row"><div class="key">状態</div><div class="val">人間判断が必要</div></div></div><div class="next"><b>次に見る：</b>決済処理・失敗ログ</div></div></div>
-    <div class="hibiki">響</div>
-  </section>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div class="vignette"></div>
+  <div class="hud">
+    <div class="priority">
+      <div class="kicker">Priority Core</div>
+      <div class="title" id="priorityTitle">Twinow：決済エラーを最優先で確認</div>
+      <div class="meta" id="priorityMeta">影響範囲：店舗ポータル / 決済フロー</div>
+      <div class="pulse-note" id="priorityPulse" style="display:inline-flex"><b></b><span>人間判断が必要</span></div>
+    </div>
+    <div class="legend">
+      <div><span class="sw ok"></span>正常</div>
+      <div><span class="sw warn"></span>注意</div>
+      <div><span class="sw danger"></span>優先対応</div>
+    </div>
+  </div>
 
-  <section class="scene foundia">
-    <div class="grid"></div><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
-    <div class="hud"><div class="card"><div class="kicker">Priority Core</div><div class="hud-title">Foundia：画像生成停止を確認</div><div class="hud-meta">影響範囲：記事画像 / 生成Job</div><div class="human"><i style="background:var(--warn);box-shadow:0 0 10px rgba(255,216,106,.75)"></i>確認が必要</div></div></div>
-    <svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <line x1="21" y1="25" x2="24" y2="35"/><line class="warn" x1="78" y1="25" x2="65" y2="48"/><line x1="78" y1="25" x2="73" y2="35"/>
-      <line x1="15" y1="78" x2="20" y2="72"/><line x1="85" y1="78" x2="80" y2="72"/><line x1="50" y1="13" x2="47" y2="22"/><line x1="50" y1="89" x2="53" y2="82"/>
-      <line class="warn" x1="65" y1="48" x2="50" y2="52"/>
-    </svg>
-    <div class="core"><div class="c-label">PRIORITY CORE</div><div class="count">1</div><div class="unit">優先対応</div><div class="caption">Foundia警告</div></div>
-    <div class="media m-twinow">Twinow</div><div class="media m-foundia">Foundia</div><div class="media m-carwhip">carwhip</div><div class="media m-crypto">crypto-jp</div><div class="media m-smap">smaphomeister</div><div class="media m-ai">ai-trades</div>
-    <div class="job j-t1"></div><div class="job j-t2"></div><div class="job j-f1"></div><div class="job j-c1"></div><div class="job j-cr1"></div><div class="job j-s1"></div><div class="job j-a1"></div>
-    <div class="issue foundia-warning"><input class="issue-toggle" id="issue-toggle-2" type="checkbox"><label class="issue-hit" for="issue-toggle-2" aria-label="詳細を表示"><div class="issue-bubble">画像<span class="badge">画像生成停止</span></div></label><div class="detail"><label class="detail-close" for="issue-toggle-2" aria-label="閉じる">×</label><h3>Foundia｜画像生成停止</h3><div class="chips"><span class="chip">重要度：警告</span><span class="chip">件数：1件</span><span class="chip">対象：Foundia</span></div><div class="rows"><div class="row"><div class="key">内容</div><div class="val">記事画像の生成処理が停止</div></div><div class="row"><div class="key">影響</div><div class="val">画像生成Job</div></div><div class="row"><div class="key">状態</div><div class="val">確認が必要</div></div></div><div class="next"><b>次に見る：</b>画像生成Job・Worker状態</div></div></div>
-    <div class="hibiki">響</div>
-  </section>
+  <button id="hibiki" title="響">響</button>
 
-  <section class="scene worker">
-    <div class="grid"></div><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
-    <div class="hud"><div class="card"><div class="kicker">Priority Core</div><div class="hud-title">Shared Worker停止を最優先で確認</div><div class="hud-meta">影響範囲：複数媒体 / 生成処理</div><div class="human"><i></i>人間判断が必要</div></div></div>
-    <svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <line class="cross" x1="50" y1="68" x2="21" y2="25"/><line class="cross" x1="50" y1="68" x2="78" y2="25"/><line class="cross" x1="50" y1="68" x2="15" y2="78"/><line class="cross" x1="50" y1="68" x2="85" y2="78"/>
-      <line class="hot" x1="50" y1="68" x2="50" y2="52"/><line x1="50" y1="68" x2="50" y2="89"/>
-    </svg>
-    <div class="core"><div class="c-label">PRIORITY CORE</div><div class="count">1</div><div class="unit">優先対応</div><div class="caption">Worker停止</div></div>
-    <div class="media m-twinow">Twinow</div><div class="media m-foundia">Foundia</div><div class="media m-carwhip">carwhip</div><div class="media m-crypto">crypto-jp</div><div class="media m-smap">smaphomeister</div><div class="media m-ai">ai-trades</div>
-    <div class="job j-t1"></div><div class="job j-t2"></div><div class="job j-f1"></div><div class="job j-c1"></div><div class="job j-cr1"></div><div class="job j-s1"></div><div class="job j-a1"></div>
-    <div class="issue worker-critical"><input class="issue-toggle" id="issue-toggle-3" type="checkbox"><label class="issue-hit" for="issue-toggle-3" aria-label="詳細を表示"><div class="issue-bubble">W<span class="badge">Worker停止</span></div></label><div class="detail"><label class="detail-close" for="issue-toggle-3" aria-label="閉じる">×</label><h3>Shared Worker｜停止</h3><div class="chips"><span class="chip">重要度：重大</span><span class="chip">件数：1件</span><span class="chip">対象：媒体横断</span></div><div class="rows"><div class="row"><div class="key">内容</div><div class="val">共通Workerが停止</div></div><div class="row"><div class="key">影響</div><div class="val">複数媒体の生成処理</div></div><div class="row"><div class="key">状態</div><div class="val">人間判断が必要</div></div></div><div class="next"><b>次に見る：</b>Worker / Queue / 再実行状態</div></div></div>
-    <div class="hibiki">響</div>
-  </section>
-
-  <section class="scene mixed">
-    <div class="grid"></div><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
-    <div class="hud"><div class="card"><div class="kicker">Priority Core</div><div class="hud-title">3件の優先事象を確認</div><div class="hud-meta">Twinow / Foundia / Shared Worker</div><div class="human"><i></i>優先順に確認</div></div></div>
-    <svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <line class="hot" x1="21" y1="25" x2="38" y2="52"/><line class="warn" x1="78" y1="25" x2="64" y2="48"/><line class="cross" x1="50" y1="68" x2="50" y2="52"/>
-      <line class="cross" x1="50" y1="68" x2="21" y2="25"/><line class="cross" x1="50" y1="68" x2="78" y2="25"/>
-      <line x1="15" y1="78" x2="20" y2="72"/><line x1="85" y1="78" x2="80" y2="72"/><line x1="50" y1="13" x2="47" y2="22"/><line x1="50" y1="89" x2="53" y2="82"/>
-    </svg>
-    <div class="core"><div class="c-label">PRIORITY CORE</div><div class="count">3</div><div class="unit">優先対応</div><div class="caption">複合状態</div></div>
-    <div class="media m-twinow">Twinow</div><div class="media m-foundia">Foundia</div><div class="media m-carwhip">carwhip</div><div class="media m-crypto">crypto-jp</div><div class="media m-smap">smaphomeister</div><div class="media m-ai">ai-trades</div>
-    <div class="job j-t2"></div><div class="job j-f1"></div><div class="job j-c1"></div><div class="job j-cr1"></div><div class="job j-s1"></div><div class="job j-a1"></div>
-    <div class="issue twinow-critical"><input class="issue-toggle" id="issue-toggle-4" type="checkbox"><label class="issue-hit" for="issue-toggle-4" aria-label="詳細を表示"><div class="issue-bubble">決済<span class="badge">決済エラー</span></div></label><div class="detail"><label class="detail-close" for="issue-toggle-4" aria-label="閉じる">×</label><h3>Twinow｜決済エラー</h3><div class="chips"><span class="chip">重要度：重大</span><span class="chip">件数：1件</span><span class="chip">対象：Twinow</span></div><div class="rows"><div class="row"><div class="key">内容</div><div class="val">店舗側の決済処理で異常</div></div><div class="row"><div class="key">影響</div><div class="val">決済フロー</div></div></div><div class="next"><b>次に見る：</b>決済処理・失敗ログ</div></div></div>
-    <div class="issue foundia-warning"><input class="issue-toggle" id="issue-toggle-5" type="checkbox"><label class="issue-hit" for="issue-toggle-5" aria-label="詳細を表示"><div class="issue-bubble">画像<span class="badge">画像生成停止</span></div></label><div class="detail"><label class="detail-close" for="issue-toggle-5" aria-label="閉じる">×</label><h3>Foundia｜画像生成停止</h3><div class="chips"><span class="chip">重要度：警告</span><span class="chip">件数：1件</span><span class="chip">対象：Foundia</span></div><div class="rows"><div class="row"><div class="key">内容</div><div class="val">画像生成Jobが停止</div></div><div class="row"><div class="key">影響</div><div class="val">記事画像</div></div></div><div class="next"><b>次に見る：</b>画像生成Job・Worker状態</div></div></div>
-    <div class="issue worker-warning"><input class="issue-toggle" id="issue-toggle-6" type="checkbox"><label class="issue-hit" for="issue-toggle-6" aria-label="詳細を表示"><div class="issue-bubble">W<span class="badge">Worker遅延</span></div></label><div class="detail"><label class="detail-close" for="issue-toggle-6" aria-label="閉じる">×</label><h3>Shared Worker｜遅延</h3><div class="chips"><span class="chip">重要度：警告</span><span class="chip">件数：1件</span><span class="chip">対象：媒体横断</span></div><div class="rows"><div class="row"><div class="key">内容</div><div class="val">処理遅延を検知</div></div><div class="row"><div class="key">影響</div><div class="val">複数媒体</div></div></div><div class="next"><b>次に見る：</b>Queue / Worker状態</div></div></div>
-    <div class="hibiki">響</div>
-  </section>
+  <div id="detail">
+    <div class="top"><h3 id="detailTitle"></h3><button class="close" id="closeDetail">×</button></div>
+    <p id="detailText"></p>
+    <div class="tags" id="detailTags"></div>
+    <div class="list" id="detailList"></div>
+    <button class="action" id="detailAction">この項目を開く</button>
+  </div>
 </div>
 
-<div class="controls">
-  <label for="twinow">Twinow重大</label>
-  <label for="foundia">Foundia警告</label>
-  <label for="worker">Worker停止</label>
-  <label for="mixed">複合</label>
+<footer>
+  <button data-mode="twinowCritical" class="active">Twinow重大</button>
+  <button data-mode="foundiaWarn">Foundia警告</button>
+  <button data-mode="workerFail">Worker停止</button>
+  <button data-mode="mixed">複合</button>
+</footer>
 </div>
-</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+const media = [
+  {id:'twinow', label:'Twinow', color:'#63d8ff', angle:-0.85},
+  {id:'foundia', label:'Foundia', color:'#b99cff', angle:0.1},
+  {id:'carwhip', label:'carwhip', color:'#ffb06a', angle:0.95},
+  {id:'crypto', label:'crypto-jp', color:'#ffe36d', angle:2.0},
+  {id:'smap', label:'smaphomeister', color:'#74e3a5', angle:2.8},
+  {id:'aitrades', label:'ai-trades', color:'#ff8ecf', angle:-2.35}
+];
+
+const jobsBase = [
+ {id:'t_pub', media:'twinow', label:'公開待ち', severity:0, count:2, desc:'Twinowの記事公開待ち。通常キューで処理中。'},
+ {id:'t_img', media:'twinow', label:'画像生成', severity:0, count:1, desc:'画像生成ジョブ。現在は正常に処理されています。'},
+ {id:'t_pay', media:'twinow', label:'決済', severity:0, count:1, desc:'店舗側の決済系イベント。通常監視中。'},
+ {id:'f_img', media:'foundia', label:'画像', severity:0, count:2, desc:'Foundiaの記事画像生成。'},
+ {id:'f_art', media:'foundia', label:'記事', severity:0, count:3, desc:'Foundiaの記事生成キュー。'},
+ {id:'c_art', media:'carwhip', label:'記事', severity:0, count:2, desc:'carwhipの記事生成。'},
+ {id:'cr_art', media:'crypto', label:'記事', severity:0, count:1, desc:'cryptocurrency-jp.netの記事処理。'},
+ {id:'s_art', media:'smap', label:'記事', severity:0, count:1, desc:'smaphomeister.netの記事処理。'},
+ {id:'a_art', media:'aitrades', label:'記事', severity:0, count:1, desc:'ai-trades.comの記事処理。'},
+ {id:'worker', media:'system', label:'Worker', severity:0, count:1, desc:'AI Workerの稼働状態。'}
+];
+
+let jobs = jobsBase.map(x=>({...x}));
+let nodes = [];
+let W=0,H=0,cx=0,cy=0,mode='twinowCritical',last=performance.now();
+let selected=null;
+let priorityCount=1;
+
+function resize(){
+  const r=stage.getBoundingClientRect();
+  W=r.width; H=r.height;
+  canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  cx=W/2; cy=H*0.53;
+  rebuild();
+}
+window.addEventListener('resize',resize);
+
+function mediaPos(m){
+  const rad = Math.min(W,H) * (W<500 ? .31 : .34);
+  return {x:cx+Math.cos(m.angle)*rad, y:cy+Math.sin(m.angle)*rad*.72};
+}
+function rebuild(){
+  const old = new Map(nodes.map(n=>[n.id,n]));
+  nodes = [];
+  media.forEach(m=>{
+    const p=mediaPos(m);
+    nodes.push({...m,type:'media',x:old.get(m.id)?.x??p.x,y:old.get(m.id)?.y??p.y,vx:0,vy:0,tx:p.x,ty:p.y,r:W<500?26:31});
+  });
+  jobs.forEach((j,i)=>{
+    let tx,ty;
+    if(j.media==='system'){tx=cx;ty=cy+Math.min(W,H)*.25;}
+    else{
+      const m=media.find(x=>x.id===j.media), p=mediaPos(m);
+      const off=(i%3-1)*0.55;
+      tx=p.x+Math.cos(m.angle+Math.PI/2)*42*off;
+      ty=p.y+Math.sin(m.angle+Math.PI/2)*42*off;
+    }
+    const o=old.get(j.id);
+    nodes.push({...j,type:'job',x:o?.x??tx+(Math.random()-.5)*24,y:o?.y??ty+(Math.random()-.5)*24,vx:o?.vx??0,vy:o?.vy??0,tx,ty,r:9+Math.min(j.count,4)*2.3});
+  });
+}
+
+function setMode(next){
+  mode=next; jobs=jobsBase.map(x=>({...x}));
+  let title='';
+  let meta='';
+  let human=false;
+  if(next==='twinowCritical'){
+    const x=jobs.find(j=>j.id==='t_pay'); x.severity=2; x.label='決済エラー'; x.desc='Twinow店舗決済で異常を検知。人間確認が必要です。';
+    title='Twinow：決済エラーを最優先で確認';
+    meta='影響範囲：店舗ポータル / 決済フロー';
+    human=true;
+  }else if(next==='foundiaWarn'){
+    const x=jobs.find(j=>j.id==='f_img'); x.severity=1; x.label='画像欠落'; x.desc='Foundiaの一部記事で画像生成が完了していません。再生成候補です。';
+    title='Foundia：画像欠落を確認';
+    meta='注意項目 1件 / 再生成候補';
+  }else if(next==='workerFail'){
+    const x=jobs.find(j=>j.id==='worker'); x.severity=2; x.label='Worker停止'; x.desc='AI Workerの応答が停止。複数媒体の生成処理に影響する可能性があります。';
+    title='共通Worker停止：媒体横断で最優先';
+    meta='影響範囲：記事生成 / 画像生成 / 複数媒体';
+    human=true;
+  }else if(next==='mixed'){
+    Object.assign(jobs.find(j=>j.id==='t_img'),{severity:1,label:'画像再生成',desc:'Twinowの画像生成で再処理が必要な項目があります。'});
+    Object.assign(jobs.find(j=>j.id==='f_art'),{severity:1,label:'記事確認',desc:'Foundiaの記事生成で人間確認が必要な項目があります。'});
+    Object.assign(jobs.find(j=>j.id==='worker'),{severity:2,label:'Worker不安定',desc:'Workerの応答遅延を検知。複数媒体へ波及する前に確認が必要です。'});
+    title='共通Workerの不安定化を最優先で確認';
+    meta='注意項目 2件 / 優先対応 1件';
+    human=true;
+  }
+  priorityCount = jobs.filter(j=>j.severity>0).length;
+  document.getElementById('priorityTitle').textContent=title;
+  document.getElementById('priorityMeta').textContent=meta;
+  document.getElementById('priorityPulse').style.display=human?'inline-flex':'none';
+  document.querySelectorAll('footer button').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
+  document.getElementById('detail').classList.remove('show');
+  rebuild();
+}
+
+document.querySelectorAll('footer button').forEach(b=>{
+  b.addEventListener('click',()=>setMode(b.dataset.mode));
+  b.addEventListener('touchend',e=>{e.preventDefault();setMode(b.dataset.mode);},{passive:false});
+});
+
+function severityColor(s){return s===2?'#ff677b':s===1?'#ffd86a':'#59d98e'}
+
+function update(dt){
+  const activeCritical = nodes.filter(n=>n.type==='job' && n.severity===2);
+  const criticalIds = new Set(activeCritical.map(n=>n.id));
+  const coreR = Math.min(W,H)*(W<500?.12:.10);
+
+  for(const n of nodes){
+    let tx=n.tx, ty=n.ty;
+    if(n.type==='job'){
+      if(n.severity===2){
+        const a = n.id==='worker' ? 1.45 : (hash(n.id)%628)/100;
+        tx=cx + Math.cos(a)*coreR*.92;
+        ty=cy + Math.sin(a)*coreR*.76;
+      } else if(n.severity===1){
+        tx = n.tx + (cx-n.tx)*.23;
+        ty = n.ty + (cy-n.ty)*.23;
+      } else if(activeCritical.length){
+        tx = n.tx + (n.tx-cx)*.05;
+        ty = n.ty + (n.ty-cy)*.05;
+      }
+    }
+    const k=n.type==='media'?.010:.018;
+    n.vx += (tx-n.x)*k*dt;
+    n.vy += (ty-n.y)*k*dt;
+
+    if(n.type==='job' && n.severity<2){
+      const t=performance.now()/1000;
+      n.vx += Math.sin(t*.45 + hash(n.id))*0.003*dt;
+      n.vy += Math.cos(t*.38 + hash(n.id)*.7)*0.003*dt;
+    }
+
+    n.vx*=Math.pow(.88,dt); n.vy*=Math.pow(.88,dt);
+    n.x+=n.vx*dt; n.y+=n.vy*dt;
+  }
+
+  // lightweight collision
+  for(let i=0;i<nodes.length;i++){
+    for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i], b=nodes[j];
+      const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1;
+      const min=(a.r||10)+(b.r||10)+7;
+      if(d<min){
+        const f=(min-d)/d*.018*dt;
+        a.x-=dx*f; a.y-=dy*f; b.x+=dx*f; b.y+=dy*f;
+      }
+    }
+  }
+}
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i);return Math.abs(h)}
+
+function roundRect(x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();
+}
+function textWidth(t,font){ctx.save();ctx.font=font;const w=ctx.measureText(t).width;ctx.restore();return w}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // grid / field
+  ctx.save();
+  ctx.globalAlpha=.09;ctx.strokeStyle='#8bcfff';ctx.lineWidth=.5;
+  const step=42;
+  for(let x=(cx%step);x<W;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=(cy%step);y<H;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  ctx.restore();
+
+  // media bonds
+  media.forEach(m=>{
+    const mn=nodes.find(n=>n.id===m.id);
+    ctx.save();ctx.strokeStyle=hexAlpha(m.color,.16);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(mn.x,mn.y);ctx.stroke();ctx.restore();
+  });
+
+  // core rings
+  const t=performance.now()/1000;
+  const base=Math.min(W,H)*(W<500?.105:.09);
+  for(let i=0;i<3;i++){
+    ctx.save();
+    ctx.strokeStyle=`rgba(124,233,255,${.18-i*.045})`;
+    ctx.lineWidth=1;
+    ctx.setLineDash([4+i*2,8+i*3]);
+    ctx.translate(cx,cy);ctx.rotate((i%2?1:-1)*t*.03*(i+1));
+    ctx.beginPath();ctx.arc(0,0,base+i*15,0,Math.PI*2);ctx.stroke();ctx.restore();
+  }
+  const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.2);
+  grad.addColorStop(0,'rgba(124,233,255,.13)');grad.addColorStop(1,'rgba(124,233,255,0)');
+  ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,base*1.3,0,Math.PI*2);ctx.fill();
+
+  // nodes
+  const order=[...nodes].sort((a,b)=>(a.severity||0)-(b.severity||0));
+  for(const n of order){
+    if(n.type==='media') drawMedia(n);
+    else drawJob(n);
+  }
+
+  // Keep the central count above every node on mobile and desktop.
+  drawCoreText();
+}
+function drawCoreText(){
+  ctx.save();
+  ctx.textAlign='center';
+  ctx.shadowColor='rgba(4,9,14,.95)';ctx.shadowBlur=7;
+  ctx.fillStyle='#f2fcff';ctx.font=`800 ${W<430?28:32}px -apple-system, sans-serif`;ctx.fillText(String(priorityCount),cx,cy+2);
+  ctx.shadowBlur=4;
+  ctx.fillStyle='#8fb4c7';ctx.font='700 8px -apple-system, sans-serif';ctx.fillText('PRIORITY CORE',cx,cy+18);
+  ctx.fillStyle='#6f8da0';ctx.font='8px -apple-system, sans-serif';ctx.fillText('要対応',cx,cy+29);
+  ctx.restore();
+}
+function drawMedia(n){
+  const p=performance.now()/1000;
+  ctx.save();
+  const g=ctx.createRadialGradient(n.x,n.y,1,n.x,n.y,n.r*1.9);
+  g.addColorStop(0,hexAlpha(n.color,.18));g.addColorStop(1,hexAlpha(n.color,0));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,n.r*1.9,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=hexAlpha(n.color,.50);ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle=hexAlpha(n.color,.16);ctx.setLineDash([3,6]);ctx.beginPath();ctx.arc(n.x,n.y,n.r+6,0,Math.PI*2);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#dcebf5';ctx.font=`600 ${W<430?10:10}px -apple-system, sans-serif`;ctx.textAlign='center';
+  ctx.fillText(n.label,n.x,n.y+3);
+  ctx.restore();
+}
+function drawJob(n){
+  const s=n.severity||0, col=severityColor(s);
+  const pulse=s===2 ? 1+Math.sin(performance.now()/230)*.09 : 1;
+  const r=n.r*(s===2?1.35:s===1?1.12:1)*pulse;
+
+  if(n.media!=='system' && s<2){
+    const m=nodes.find(x=>x.id===n.media);
+    ctx.save();ctx.strokeStyle='rgba(255,255,255,.055)';ctx.lineWidth=.8;
+    ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(n.x,n.y);ctx.stroke();ctx.restore();
+  }
+
+  ctx.save();
+  if(s>0){
+    const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*2.5);
+    g.addColorStop(0,hexAlpha(col,s===2?.24:.15));g.addColorStop(1,hexAlpha(col,0));
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,r*2.5,0,Math.PI*2);ctx.fill();
+  }
+  ctx.fillStyle='rgba(8,18,29,.88)';ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=hexAlpha(col,s===0?.42:.88);ctx.lineWidth=s===2?1.7:1;ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.stroke();
+
+  if(s===2){
+    ctx.strokeStyle=hexAlpha(col,.30);ctx.lineWidth=1;ctx.beginPath();ctx.arc(n.x,n.y,r+6+Math.sin(performance.now()/250)*2,0,Math.PI*2);ctx.stroke();
+  }
+
+  const showLabel = s>0 || W>650;
+  if(showLabel){
+    const font=`${s===2?'700':'600'} ${W<430?9:10}px -apple-system, sans-serif`;
+    const tw=textWidth(n.label,font)+14;
+    const y=n.y+r+8;
+    ctx.fillStyle='rgba(5,12,19,.82)';roundRect(n.x-tw/2,y,tw,20,10);ctx.fill();
+    ctx.strokeStyle=hexAlpha(col,.26);ctx.stroke();
+    ctx.fillStyle=s===0?'#b8c9d5':'#eef8ff';ctx.font=font;ctx.textAlign='center';ctx.fillText(n.label,n.x,y+13.5);
+  }
+  ctx.restore();
+}
+function hexAlpha(hex,a){
+  const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function loop(now){
+  const dt=Math.min((now-last)/16.67,2);last=now;update(dt);draw();requestAnimationFrame(loop);
+}
+
+function activateCanvasPoint(clientX,clientY){
+  const r=canvas.getBoundingClientRect();
+  const x=clientX-r.left, y=clientY-r.top;
+  // Larger touch radius on phones so small moving nodes remain easy to tap.
+  const extra=W<640?24:14;
+  const hits=nodes
+    .map(n=>({n,d:Math.hypot(n.x-x,n.y-y)}))
+    .filter(h=>h.d<Math.max((h.n.r||12)+extra,30))
+    .sort((a,b)=>{
+      const sev=(b.n.severity||0)-(a.n.severity||0);
+      return sev!==0?sev:a.d-b.d;
+    });
+  if(hits.length){
+    selected=hits[0].n;
+    showDetail(selected);
+    return true;
+  }
+  return false;
+}
+
+if(window.PointerEvent){
+  canvas.addEventListener('pointerup',e=>{
+    if(e.pointerType==='touch') e.preventDefault();
+    activateCanvasPoint(e.clientX,e.clientY);
+  },{passive:false});
+}else{
+  canvas.addEventListener('touchend',e=>{
+    const t=e.changedTouches&&e.changedTouches[0];
+    if(!t) return;
+    e.preventDefault();
+    activateCanvasPoint(t.clientX,t.clientY);
+  },{passive:false});
+  canvas.addEventListener('click',e=>activateCanvasPoint(e.clientX,e.clientY));
+}
+function showDetail(n){
+  const isMedia=n.type==='media';
+  document.getElementById('detailTitle').textContent=isMedia?n.label:`${n.label} — ${n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||''}`;
+  document.getElementById('detailText').textContent=isMedia?`${n.label}の稼働領域。関連するJob・異常・確認事項が周囲に集まり、優先度が上がるとPriority Coreへ浮上します。`:n.desc;
+  const tags=document.getElementById('detailTags'); tags.innerHTML='';
+  const arr=isMedia?['媒体領域','タップで詳細へ']:[n.severity===2?'優先対応':n.severity===1?'注意':'正常',`件数 ${n.count||1}`,n.media==='system'?'媒体横断':'媒体内'];
+  arr.forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent=t;tags.appendChild(s)});
+
+  const list=document.getElementById('detailList'); list.innerHTML='';
+  const mediaName=isMedia?n.label:(n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||'');
+  const severity=isMedia?'媒体':(n.severity===2?'重大 / 優先対応':n.severity===1?'注意':'正常');
+  const rows=isMedia
+    ? [['対象',n.label],['状態','媒体領域'],['役割','関連Job・異常・確認事項の集約']]
+    : [['重要度',severity],['件数',`${n.count||1}件`],['対象',mediaName],['内容',n.desc]];
+  rows.forEach(([k,v])=>{
+    const r=document.createElement('div');r.className='row';
+    const key=document.createElement('div');key.className='key';key.textContent=k;
+    const val=document.createElement('div');val.className='val';val.textContent=v;
+    r.append(key,val);list.appendChild(r);
+  });
+  document.getElementById('detail').classList.add('show');
+}
+document.getElementById('closeDetail').onclick=()=>document.getElementById('detail').classList.remove('show');
+document.getElementById('closeDetail').addEventListener('touchend',e=>{e.preventDefault();document.getElementById('detail').classList.remove('show')},{passive:false});
+document.getElementById('detailAction').onclick=()=>alert('本番では対象画面へ遷移します。デモでは遷移を省略しています。');
+document.getElementById('hibiki').onclick=()=>alert('響：この画面の「なぜ優先なのか」「次に何をすべきか」を自然言語で説明する想定です。');
+
+resize(); setMode('twinowCritical'); requestAnimationFrame(loop);
+</script>
 </body>
 </html>
