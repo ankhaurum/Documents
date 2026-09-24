@@ -349,16 +349,30 @@ document.getElementById('refreshBtn').addEventListener('touchend',e=>{
 
 function severityColor(s){return s===2?'#ff677b':s===1?'#ffd86a':'#59d98e'}
 
+function coreVisualRadius(){
+  return isLandscape()
+    ? Math.min(W*.055,H*.18)
+    : Math.min(W,H)*(W<500?.105:.09);
+}
+
+function jobVisualOuterRadius(n){
+  const s=n.severity||0;
+  const scale=s===2?1.35:s===1?1.12:1;
+  // 重大/停止はパルス外周の最大値まで含めて判定。
+  const pulseMax=s===2?1.09:1;
+  const outerRing=s===2?8:2;
+  return (n.r||10)*scale*pulseMax + outerRing;
+}
+
+function priorityOuterGap(n){
+  // Core外周とノード外周の見た目の距離。
+  if(n.status==='warning') return 25;
+  if(n.status==='stop') return 8;
+  return 4; // 重大
+}
+
 function priorityDistance(n){
-  if(isLandscape()){
-    if(n.status==='warning') return Math.min(W*.085,H*.27);
-    if(n.status==='stop') return Math.min(W*.060,H*.19);
-    return Math.min(W*.055,H*.175);
-  }
-  const s=Math.min(W,H);
-  if(n.status==='warning') return s*.23;
-  if(n.status==='stop') return s*.185;
-  return s*.165;
+  return coreVisualRadius() + jobVisualOuterRadius(n) + priorityOuterGap(n);
 }
 
 function update(dt){
@@ -399,7 +413,7 @@ function update(dt){
     if(n.type==='job' && (n.severity||0)>0){
       const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
       const dist=priorityDistance(n);
-      const safe=dist*.90;
+      const safe=dist;
       if(d<safe){
         const push=(safe-d)/d;
         n.x+=dx*push;
@@ -420,7 +434,12 @@ function update(dt){
         const hasMedia=a.type==='media' || b.type==='media';
         const bothJobs=a.type==='job' && b.type==='job';
         const gap=hasMedia?18:(bothJobs?16:10);
-        const min=(a.r||10)+(b.r||10)+gap;
+        const collisionRadius=x=>{
+          if(x.type==='media') return (x.r||10)+6;
+          if(x.type==='job' && (x.severity||0)>0) return jobVisualOuterRadius(x);
+          return x.r||10;
+        };
+        const min=collisionRadius(a)+collisionRadius(b)+gap;
 
         if(d<min){
           const overlap=min-d;
