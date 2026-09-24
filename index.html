@@ -583,8 +583,8 @@ function drawJob(n){
 
   if(n.media!=='system' && s>0){
     const m=nodes.find(x=>x.id===n.media);
-    // 因子→媒体の線は、媒体→Priority Coreの線と同じ1pxに統一。
-    ctx.save();ctx.strokeStyle='rgba(255,255,255,.055)';ctx.lineWidth=1;
+    // 因子→媒体の線は、媒体→Priority Coreと同じ太さ・媒体色・不透明度に統一。
+    ctx.save();ctx.strokeStyle=hexAlpha(m.color,.16);ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(n.x,n.y);ctx.stroke();ctx.restore();
   }
 
