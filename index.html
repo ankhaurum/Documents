@@ -208,30 +208,32 @@ const media = [
 ];
 
 const jobsBase = [
+  // Twinow：3件（重大1 / 警告2）
   {id:'t_access', media:'twinow', status:'critical', baseSeverity:2, severity:0, count:2, label:'店舗ページ閲覧障害', desc:'公開済み店舗ページの一部で閲覧エラーを検知。送客導線に影響しています。'},
   {id:'t_reco', media:'twinow', status:'warning', baseSeverity:1, severity:0, count:4, label:'レコメンド遅延', desc:'周辺レコメンドの応答時間が基準値を超過しています。'},
+  {id:'t_readback', media:'twinow', status:'warning', baseSeverity:1, severity:0, count:2, label:'公開Readback不一致', desc:'公開後ReadbackでHUB側の正規内容との差分を検知しています。'},
 
+  // Foundia：4件（重大1 / 停止1 / 警告2）
+  {id:'f_public', media:'foundia', status:'critical', baseSeverity:2, severity:0, count:2, label:'公開記事表示障害', desc:'公開中の記事ページで表示障害を検知。閲覧・回遊に直接影響しています。'},
   {id:'f_image_worker', media:'foundia', status:'stop', baseSeverity:2, severity:0, count:1, label:'画像生成Worker停止', desc:'記事画像生成Workerが停止し、新規記事の画像生成が進んでいません。'},
   {id:'f_ga4', media:'foundia', status:'warning', baseSeverity:1, severity:0, count:1, label:'GA4流入急減', desc:'直近平均に対して流入が急減。計測異常または流入低下の確認が必要です。'},
+  {id:'f_publish_delay', media:'foundia', status:'warning', baseSeverity:1, severity:0, count:3, label:'公開処理遅延', desc:'公開待ち記事の処理時間が通常レンジを超えています。'},
 
+  // carwhip：2件（重大1 / 警告1）
   {id:'c_cta', media:'carwhip', status:'critical', baseSeverity:2, severity:0, count:3, label:'CTAリンク切れ', desc:'主要記事のCTAリンク切れを検知。収益導線に影響しています。'},
   {id:'c_ctr', media:'carwhip', status:'warning', baseSeverity:1, severity:0, count:5, label:'CTR急低下', desc:'検索流入上位記事のCTRが基準値を下回っています。'},
 
-  {id:'cr_scheduler', media:'crypto', status:'stop', baseSeverity:2, severity:0, count:1, label:'更新Scheduler停止', desc:'記事自動生成・更新Schedulerが停止しています。'},
+  // 残り3媒体：各1件
   {id:'cr_data', media:'crypto', status:'warning', baseSeverity:1, severity:0, count:2, label:'参照データ更新遅延', desc:'外部参照データの更新時刻が許容範囲を超えています。'},
-
-  {id:'s_cta', media:'smap', status:'critical', baseSeverity:2, severity:0, count:2, label:'送客CTA遷移障害', desc:'問い合わせ・送客CTAの一部で正常に遷移しない状態を検知。'},
   {id:'s_bounce', media:'smap', status:'warning', baseSeverity:1, severity:0, count:2, label:'LP離脱率急上昇', desc:'主要LPの離脱率が直近平均を大きく上回っています。'},
-
-  {id:'a_queue', media:'aitrades', status:'stop', baseSeverity:2, severity:0, count:1, label:'記事生成Queue停止', desc:'AI記事生成Jobが連続失敗しQueue処理が停止しています。'},
-  {id:'a_check', media:'aitrades', status:'warning', baseSeverity:1, severity:0, count:3, label:'AI Check失敗率上昇', desc:'公開前AI Checkの失敗率が基準値を超えています。'}
+  {id:'a_queue', media:'aitrades', status:'stop', baseSeverity:2, severity:0, count:1, label:'記事生成Queue停止', desc:'AI記事生成Jobが連続失敗しQueue処理が停止しています。'}
 ];
 
 let jobs = jobsBase.map(x=>({...x}));
 let nodes = [];
 let W=0,H=0,cx=0,cy=0,mode='mixed',last=performance.now();
 let selected=null;
-let priorityCount=3;
+let priorityCount=5;
 
 function isLandscape(){
   return W>H*1.35;
@@ -306,13 +308,13 @@ function setMode(next){
     human=true;
   }else if(next==='workerFail'){
     activeIds=jobs.filter(j=>j.status==='stop').map(j=>j.id);
-    title='停止 3件を優先確認';
-    meta='Foundia / crypto-jp / ai-trades';
+    title='停止 2件を優先確認';
+    meta='Foundia / ai-trades';
     human=true;
   }else if(next==='foundiaWarn'){
     activeIds=jobs.filter(j=>j.status==='warning').map(j=>j.id);
-    title='警告 6件を確認';
-    meta='6媒体で異常値・遅延を検知';
+    title='警告 7件を確認';
+    meta='5媒体で異常値・遅延を検知';
   }else if(next==='mixed'){
     activeIds=jobs.map(j=>j.id);
     const criticalCount=jobs.filter(j=>j.status==='critical').length;
@@ -727,7 +729,7 @@ function showCoreDetail(){
     .sort((a,b)=>(b.severity||0)-(a.severity||0));
 
   selected=null;
-  document.getElementById('detailTitle').textContent=`Priority Core — 優先対応 ${priorityJobs.length}件`;
+  document.getElementById('detailTitle').textContent=`Priority Core — 優先対応 ${priorityCount}件`;
   const detailText=document.getElementById('detailText');
   detailText.textContent='';
   detailText.style.display='none';
