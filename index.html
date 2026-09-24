@@ -239,18 +239,29 @@ function isLandscape(){
   return W>H*1.35;
 }
 function resize(){
+  const wasLandscape = W>0 && H>0 ? isLandscape() : null;
   const r=stage.getBoundingClientRect();
   W=r.width; H=r.height;
   canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  if(isLandscape()){
+  const nowLandscape=isLandscape();
+  if(nowLandscape){
     // 左にPriority説明領域を残し、Field本体を右側へ展開。
     cx=W*0.64; cy=H*0.55;
   }else{
     cx=W/2; cy=H*0.53;
   }
   rebuild();
+
+  // 画面回転時は媒体を新しい向きの正規位置へ即時配置。
+  // 縦/横それぞれのレイアウト値自体は変更しない。
+  if(wasLandscape!==null && wasLandscape!==nowLandscape){
+    nodes.filter(n=>n.type==='media').forEach(n=>{
+      n.x=n.tx; n.y=n.ty; n.vx=0; n.vy=0;
+    });
+  }
+
   if(nodes.some(n=>n.type==='job' && (n.severity||0)>0)) snapActivePriorityNodes();
 }
 window.addEventListener('resize',resize);
