@@ -374,7 +374,7 @@ function update(dt){
         }
       }else if(mode==='twinowCritical' && n.id==='t_pay'){
         const mp=mediaPos(media.find(m=>m.id==='twinow'));
-        const toward=isLandscape()?.48:.50;
+        const toward=isLandscape()?.45:.47;
         tx=cx + (mp.x-cx)*toward;
         ty=cy + (mp.y-cy)*toward;
       }else if(mode==='foundiaWarn' && n.id==='f_img'){
@@ -659,7 +659,7 @@ function showCoreDetail(){
   [
     `合計 ${priorityJobs.length}件`,
     critical?`重大 ${critical}件`:null,
-    warning?`注意 ${warning}件`:null
+    warning?`警告 ${warning}件`:null
   ].filter(Boolean).forEach(t=>{
     const s=document.createElement('span');
     s.className='tag';
@@ -677,7 +677,7 @@ function showCoreDetail(){
     r.className='row';
     const key=document.createElement('div');
     key.className='key';
-    key.textContent=n.severity===2?'重大':'注意';
+    key.textContent=(n.id==='worker' || /停止/.test(n.label))?'停止':(n.severity===2?'重大':'警告');
     const val=document.createElement('div');
     val.className='val';
     val.textContent=`${idx+1}. ${mediaName}｜${n.label}｜${n.desc}`;
@@ -703,11 +703,10 @@ function showDetail(n){
     detailText.style.display='none';
 
     const mediaJobs=nodes
-      .filter(x=>x.type==='job' && x.media===n.id)
+      .filter(x=>x.type==='job' && x.media===n.id && (x.severity||0)>0)
       .sort((a,b)=>(b.severity||0)-(a.severity||0) || a.label.localeCompare(b.label,'ja'));
-    const attention=mediaJobs.filter(x=>(x.severity||0)>0).length;
 
-    [`項目 ${mediaJobs.length}件`, attention?`要確認 ${attention}件`:'要確認 0件']
+    [`要対応 ${mediaJobs.length}件`]
       .forEach(t=>{
         const s=document.createElement('span');
         s.className='tag';
@@ -718,11 +717,22 @@ function showDetail(n){
     mediaJobs.forEach((job,idx)=>{
       const r=document.createElement('div');r.className='row';
       const key=document.createElement('div');key.className='key';
-      key.textContent=job.severity===2?'重大':job.severity===1?'注意':'通常';
+      if(job.id==='worker' || /停止/.test(job.label)){
+        key.textContent='停止';
+      }else{
+        key.textContent=job.severity===2?'重大':'警告';
+      }
       const val=document.createElement('div');val.className='val';
       val.textContent=`${idx+1}. ${job.label}｜${job.count||1}件`;
       r.append(key,val);list.appendChild(r);
     });
+
+    if(!mediaJobs.length){
+      const r=document.createElement('div');r.className='row';
+      const key=document.createElement('div');key.className='key';key.textContent='—';
+      const val=document.createElement('div');val.className='val';val.textContent='現在、要対応項目はありません';
+      r.append(key,val);list.appendChild(r);
+    }
 
     document.getElementById('detailAction').textContent='媒体を開く';
     document.getElementById('detail').classList.add('show');
