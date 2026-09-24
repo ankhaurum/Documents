@@ -249,6 +249,7 @@ function resize(){
     cx=W/2; cy=H*0.53;
   }
   rebuild();
+  if(nodes.some(n=>n.type==='job' && (n.severity||0)>0)) snapActivePriorityNodes();
 }
 window.addEventListener('resize',resize);
 
@@ -330,6 +331,7 @@ function setMode(next){
   document.querySelectorAll('footer button[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
   document.getElementById('detail').classList.remove('show');
   rebuild();
+  snapActivePriorityNodes();
 }
 document.querySelectorAll('footer button[data-mode]').forEach(b=>{
   b.addEventListener('click',()=>setMode(b.dataset.mode));
@@ -375,6 +377,43 @@ function priorityDistance(n){
   return coreVisualRadius() + jobVisualOuterRadius(n) + priorityOuterGap(n);
 }
 
+function snapActivePriorityNodes(){
+  const active=nodes.filter(n=>n.type==='job' && (n.severity||0)>0);
+  active.forEach(n=>{
+    const dist=priorityDistance(n);
+    if(n.media==='system'){
+      n.x=cx;
+      n.y=cy+dist;
+    }else{
+      const m=media.find(x=>x.id===n.media);
+      const mp=mediaPos(m);
+      const dx=mp.x-cx, dy=mp.y-cy;
+      const d=Math.hypot(dx,dy)||1;
+      n.x=cx + dx/d*dist;
+      n.y=cy + dy/d*dist;
+    }
+    n.vx=0;
+    n.vy=0;
+  });
+
+  // Immediate small relaxation so same-ring items do not start overlapped.
+  for(let pass=0;pass<8;pass++){
+    for(let i=0;i<active.length;i++){
+      for(let j=i+1;j<active.length;j++){
+        const a=active[i], b=active[j];
+        const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1;
+        const min=jobVisualOuterRadius(a)+jobVisualOuterRadius(b)+14;
+        if(d<min){
+          const overlap=min-d;
+          const ux=dx/d, uy=dy/d;
+          a.x-=ux*overlap*.5; a.y-=uy*overlap*.5;
+          b.x+=ux*overlap*.5; b.y+=uy*overlap*.5;
+        }
+      }
+    }
+  }
+}
+
 function update(dt){
   for(const n of nodes){
     let tx=n.tx, ty=n.ty;
@@ -395,7 +434,7 @@ function update(dt){
       }
     }
 
-    const k=n.type==='media'?.010:.028;
+    const k=n.type==='media'?.010:.060;
     n.vx += (tx-n.x)*k*dt;
     n.vy += (ty-n.y)*k*dt;
 
@@ -405,8 +444,8 @@ function update(dt){
       n.vy += Math.cos(t*.38 + hash(n.id)*.7)*.0010*dt;
     }
 
-    n.vx*=Math.pow(.86,dt);
-    n.vy*=Math.pow(.86,dt);
+    n.vx*=Math.pow(.74,dt);
+    n.vy*=Math.pow(.74,dt);
     n.x+=n.vx*dt;
     n.y+=n.vy*dt;
 
