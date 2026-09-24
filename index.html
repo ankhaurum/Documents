@@ -318,7 +318,7 @@ function setMode(next){
     const criticalCount=jobs.filter(j=>j.status==='critical').length;
     const stopCount=jobs.filter(j=>j.status==='stop').length;
     const warningCount=jobs.filter(j=>j.status==='warning').length;
-    title=`Aifate全体：${jobs.length}件の要対応を優先確認`;
+    title=`Aifate全体：優先対応 ${criticalCount+stopCount}件`;
     meta=`重大 ${criticalCount}件 / 停止 ${stopCount}件 / 警告 ${warningCount}件`;
     human=true;
   }
@@ -327,7 +327,9 @@ function setMode(next){
     if(activeIds.includes(j.id)) j.severity=j.baseSeverity;
   });
 
-  priorityCount=jobs.filter(j=>(j.severity||0)>0).length;
+  priorityCount=next==='mixed'
+    ? jobs.filter(j=>(j.severity||0)>0 && j.status!=='warning').length
+    : jobs.filter(j=>(j.severity||0)>0).length;
   document.getElementById('priorityTitle').textContent=title;
   document.getElementById('priorityMeta').textContent=meta;
   document.getElementById('priorityPulse').style.display=human?'inline-flex':'none';
@@ -371,6 +373,12 @@ function jobVisualOuterRadius(n){
 
 function priorityOuterGap(n){
   // Core外周とノード外周の見た目の距離。
+  // 複合では重大/停止を第一リング、警告を第二リングへ明確に分離。
+  if(mode==='mixed'){
+    if(n.status==='warning') return isLandscape()?62:58;
+    if(n.status==='stop') return 8;
+    return 4; // 重大
+  }
   if(n.status==='warning') return 25;
   if(n.status==='stop') return 8;
   return 4; // 重大
@@ -414,6 +422,13 @@ function snapActivePriorityNodes(){
         }
       }
     }
+    // Keep status hierarchy radial: red stays inner, yellow stays outer.
+    active.forEach(n=>{
+      const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
+      const target=priorityDistance(n);
+      n.x=cx + dx/d*target;
+      n.y=cy + dy/d*target;
+    });
   }
 }
 
@@ -504,6 +519,15 @@ function update(dt){
       }
     }
   }
+
+  // Final radial correction: keep 重大/停止 on inner ring and 警告 on outer ring.
+  nodes.filter(n=>n.type==='job' && (n.severity||0)>0).forEach(n=>{
+    const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
+    const target=priorityDistance(n);
+    const correction=(target-d)*0.22;
+    n.x += dx/d*correction;
+    n.y += dy/d*correction;
+  });
 }
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i);return Math.abs(h)}
 
