@@ -383,13 +383,13 @@ function priorityOuterGap(n){
   // Core外周とノード外周の見た目の距離。
   // 複合では重大/停止を第一リング、警告を第二リングへ明確に分離。
   if(mode==='mixed'){
-    if(n.status==='warning') return isLandscape()?62:58;
-    if(n.status==='stop') return 8;
-    return 4; // 重大
+    if(n.status==='warning') return isLandscape()?66:62;
+    if(n.status==='stop') return 12;
+    return 8; // 重大
   }
-  if(n.status==='warning') return 25;
-  if(n.status==='stop') return 8;
-  return 4; // 重大
+  if(n.status==='warning') return 29;
+  if(n.status==='stop') return 12;
+  return 8; // 重大
 }
 
 function priorityDistance(n){
