@@ -374,10 +374,8 @@ function jobRingCount(n){
 }
 
 function jobVisualOuterRadius(n){
-  const body=jobBodyRadius(n);
-  const rings=jobRingCount(n);
-  // 最外周リング + 軽いパルス分までを見た目の外周として扱う。
-  return body + 7 + (rings-1)*4 + 2;
+  // 本体サイズは固定。件数による外周拡張は行わない。
+  return jobBodyRadius(n) + 5;
 }
 
 function priorityOuterGap(n){
@@ -656,9 +654,10 @@ function drawMedia(n){
 function drawJob(n){
   const s=n.severity||0, col=severityColor(s);
   const r=jobBodyRadius(n);
-  const rings=jobRingCount(n);
+  const count=Math.max(1,Number(n.count)||1);
+  const countLevel=Math.min(count,5);
   const t=performance.now()/1000;
-  const pulse=(Math.sin(t*3.1 + hash(n.id)%17)+1)/2;
+  const pulse=(Math.sin(t*2.8 + hash(n.id)%17)+1)/2;
 
   if(n.media!=='system' && s>0){
     const m=nodes.find(x=>x.id===n.media);
@@ -669,39 +668,48 @@ function drawJob(n){
 
   ctx.save();
 
-  // 件数が増えるほど外側のグローだけを少し強める。本体円は固定。
+  // 外側はごく薄いグローのみ。件数の表現は内側に集約。
   if(s>0){
-    const outer=jobVisualOuterRadius(n);
-    const glow=ctx.createRadialGradient(n.x,n.y,r*.45,n.x,n.y,outer*1.65);
-    const strength=Math.min(.10 + rings*.035,.28);
-    glow.addColorStop(0,hexAlpha(col,strength));
+    const glow=ctx.createRadialGradient(n.x,n.y,r*.65,n.x,n.y,r*1.8);
+    const glowStrength=.07 + Math.min(countLevel,5)*.018;
+    glow.addColorStop(0,hexAlpha(col,glowStrength));
     glow.addColorStop(1,hexAlpha(col,0));
     ctx.fillStyle=glow;
-    ctx.beginPath();ctx.arc(n.x,n.y,outer*1.65,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(n.x,n.y,r*1.8,0,Math.PI*2);ctx.fill();
   }
 
-  // 固定サイズの本体。
-  ctx.fillStyle='rgba(8,18,29,.92)';
+  // 固定サイズの外殻。
+  ctx.fillStyle='rgba(8,18,29,.94)';
   ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle=hexAlpha(col,.90);
+  ctx.strokeStyle=hexAlpha(col,.88);
   ctx.lineWidth=s===2?1.7:1.4;
   ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.stroke();
 
-  // 件数 = 外周リング数。重大・停止・警告すべて同じルール。
-  for(let i=0;i<rings;i++){
-    const rr=r+7+i*4 + (i===rings-1 ? pulse*2 : 0);
-    const alpha=Math.max(.10,.31-i*.045);
-    ctx.strokeStyle=hexAlpha(col,alpha);
-    ctx.lineWidth=i===0?1.1:.9;
-    ctx.beginPath();ctx.arc(n.x,n.y,rr,0,Math.PI*2);ctx.stroke();
-  }
+  // 件数は内側の面積＋濃さで表現。
+  // 1件=小さく薄い、5件以上=大きく濃い。重大/停止/警告すべて同じルール。
+  const fillRatio=.38 + (countLevel-1)*.095;
+  const innerR=r*Math.min(fillRatio,.78);
+  const innerAlpha=.18 + (countLevel-1)*.11;
+  const inner=ctx.createRadialGradient(
+    n.x-r*.12,n.y-r*.14,1,
+    n.x,n.y,innerR
+  );
+  inner.addColorStop(0,hexAlpha(col,Math.min(innerAlpha+.18,.82)));
+  inner.addColorStop(.58,hexAlpha(col,Math.min(innerAlpha,.68)));
+  inner.addColorStop(1,hexAlpha(col,.035));
+  ctx.fillStyle=inner;
+  ctx.beginPath();ctx.arc(n.x,n.y,innerR,0,Math.PI*2);ctx.fill();
+
+  // ごく弱い呼吸感。サイズは変えず、濃さだけ変える。
+  ctx.fillStyle=hexAlpha(col,.025 + pulse*.035);
+  ctx.beginPath();ctx.arc(n.x,n.y,r*.86,0,Math.PI*2);ctx.fill();
 
   const showLabel = s>0 || (W>650 && !isLandscape());
   if(showLabel){
     const font=`${s===2?'700':'600'} ${W<430?9:10}px -apple-system, sans-serif`;
     const label=n.label;
     const tw=textWidth(label,font)+14;
-    const y=n.y+jobVisualOuterRadius(n)+5;
+    const y=n.y+r+9;
     ctx.fillStyle='rgba(5,12,19,.82)';
     roundRect(n.x-tw/2,y,tw,20,10);ctx.fill();
     ctx.strokeStyle=hexAlpha(col,.26);ctx.stroke();
