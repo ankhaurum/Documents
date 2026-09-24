@@ -557,15 +557,56 @@ function draw(){
   for(let y=(cy%step);y<H;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
   ctx.restore();
 
-  // media bonds
-  media.forEach(m=>{
+  // media -> Priority Core flow
+  // 媒体は「線の本数」ではなく、常時うすい流れ + ときどき強いパルスで存在感を出す。
+  const t=performance.now()/1000;
+  media.forEach((m,idx)=>{
     const mn=nodes.find(n=>n.id===m.id);
-    ctx.save();ctx.strokeStyle=hexAlpha(m.color,.16);ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(mn.x,mn.y);ctx.stroke();ctx.restore();
+    if(!mn) return;
+
+    const x1=mn.x, y1=mn.y, x2=cx, y2=cy;
+
+    ctx.save();
+
+    // 常時の薄い基準線
+    ctx.strokeStyle=hexAlpha(m.color,.10);
+    ctx.lineWidth=1;
+    ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+
+    // 中心へ流れる細いHUDダッシュ
+    ctx.strokeStyle=hexAlpha(m.color,.17);
+    ctx.lineWidth=1;
+    ctx.setLineDash([2,9]);
+    ctx.lineDashOffset=-(t*13 + idx*7);
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 常時うすく流れる小粒子
+    for(let p=0;p<3;p++){
+      const q=(t*.12 + idx*.113 + p/3)%1;
+      const px=x1+(x2-x1)*q;
+      const py=y1+(y2-y1)*q;
+      const fade=Math.sin(Math.PI*q);
+      ctx.fillStyle=hexAlpha(m.color,.10+.13*fade);
+      ctx.beginPath();ctx.arc(px,py,1.15,0,Math.PI*2);ctx.fill();
+    }
+
+    // ときどき少し強いパルスが媒体からCoreへ走る
+    const strong=(t*.18 + idx*.167)%1;
+    const sx=x1+(x2-x1)*strong;
+    const sy=y1+(y2-y1)*strong;
+    const strongFade=Math.sin(Math.PI*strong);
+
+    ctx.shadowColor=hexAlpha(m.color,.75);
+    ctx.shadowBlur=8+strongFade*5;
+    ctx.fillStyle=hexAlpha(m.color,.42+.34*strongFade);
+    ctx.beginPath();ctx.arc(sx,sy,1.8+strongFade*.9,0,Math.PI*2);ctx.fill();
+
+    ctx.restore();
   });
 
   // core rings
-  const t=performance.now()/1000;
   const base=isLandscape()?Math.min(W*.055,H*.18):Math.min(W,H)*(W<500?.105:.09);
   for(let i=0;i<3;i++){
     ctx.save();
@@ -606,7 +647,7 @@ function drawMedia(n){
   g.addColorStop(0,hexAlpha(n.color,.18));g.addColorStop(1,hexAlpha(n.color,0));
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,n.r*1.9,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle=hexAlpha(n.color,.50);ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle=hexAlpha(n.color,.16);ctx.setLineDash([3,6]);ctx.beginPath();ctx.arc(n.x,n.y,n.r+6,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle=hexAlpha(n.color,.10);ctx.setLineDash([3,7]);ctx.beginPath();ctx.arc(n.x,n.y,n.r+6,0,Math.PI*2);ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle='#dcebf5';ctx.font=`600 ${W<430?10:10}px -apple-system, sans-serif`;ctx.textAlign='center';
   ctx.fillText(n.label,n.x,n.y+3);
