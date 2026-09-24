@@ -261,10 +261,11 @@ function mediaPos(m){
     const ry=Math.min(H*.31,118);
     return {x:cx+Math.cos(m.angle)*rx, y:cy+Math.sin(m.angle)*ry};
   }
-  // 縦向きは媒体の重力圏をCoreから一段外側へ。
-  const rad = Math.min(W,H) * (W<500 ? .40 : .38);
-  const yScale = W<500 ? .90 : .82;
-  return {x:cx+Math.cos(m.angle)*rad, y:cy+Math.sin(m.angle)*rad*yScale};
+  // 縦向きは横半径を抑え、6媒体を縦長の楕円上に配置。
+  // Foundiaを含む左右媒体がスマホ端で見切れない余白を確保する。
+  const rx = Math.min(W,H) * (W<500 ? .32 : .34);
+  const ry = Math.min(H * .30, Math.min(W,H) * (W<500 ? .48 : .44));
+  return {x:cx+Math.cos(m.angle)*rx, y:cy+Math.sin(m.angle)*ry};
 }
 function rebuild(){
   const old = new Map(nodes.map(n=>[n.id,n]));
