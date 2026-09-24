@@ -502,6 +502,15 @@ function loop(now){
 function activateCanvasPoint(clientX,clientY){
   const r=canvas.getBoundingClientRect();
   const x=clientX-r.left, y=clientY-r.top;
+
+  // Priority Coreは常に最優先のタップ対象。
+  // スマホでは見た目より少し広い判定にして、中央数字・リングのどこを押しても開く。
+  const coreHitR=Math.min(W,H)*(W<500?.18:.145);
+  if(Math.hypot(x-cx,y-cy)<=coreHitR){
+    showCoreDetail();
+    return true;
+  }
+
   // Larger touch radius on phones so small moving nodes remain easy to tap.
   const extra=W<640?24:14;
   const hits=nodes
@@ -533,7 +542,57 @@ if(window.PointerEvent){
   },{passive:false});
   canvas.addEventListener('click',e=>activateCanvasPoint(e.clientX,e.clientY));
 }
+function showCoreDetail(){
+  const priorityJobs=nodes
+    .filter(n=>n.type==='job' && (n.severity||0)>0)
+    .sort((a,b)=>(b.severity||0)-(a.severity||0));
+
+  selected=null;
+  document.getElementById('detailTitle').textContent=`Priority Core — 優先対応 ${priorityJobs.length}件`;
+  document.getElementById('detailText').textContent=
+    priorityJobs.length
+      ? '現在、人間が確認すべき項目を優先度順に表示しています。'
+      : '現在、優先対応が必要な項目はありません。';
+
+  const tags=document.getElementById('detailTags');
+  tags.innerHTML='';
+  const critical=priorityJobs.filter(n=>n.severity===2).length;
+  const warning=priorityJobs.filter(n=>n.severity===1).length;
+  [
+    `合計 ${priorityJobs.length}件`,
+    critical?`重大 ${critical}件`:null,
+    warning?`注意 ${warning}件`:null
+  ].filter(Boolean).forEach(t=>{
+    const s=document.createElement('span');
+    s.className='tag';
+    s.textContent=t;
+    tags.appendChild(s);
+  });
+
+  const list=document.getElementById('detailList');
+  list.innerHTML='';
+  priorityJobs.forEach((n,idx)=>{
+    const mediaName=n.media==='system'
+      ? 'Aifate共通'
+      : (media.find(m=>m.id===n.media)?.label||'');
+    const r=document.createElement('div');
+    r.className='row';
+    const key=document.createElement('div');
+    key.className='key';
+    key.textContent=n.severity===2?'重大':'注意';
+    const val=document.createElement('div');
+    val.className='val';
+    val.textContent=`${idx+1}. ${mediaName}｜${n.label}｜${n.desc}`;
+    r.append(key,val);
+    list.appendChild(r);
+  });
+
+  document.getElementById('detailAction').textContent='優先項目を確認';
+  document.getElementById('detail').classList.add('show');
+}
+
 function showDetail(n){
+  document.getElementById('detailAction').textContent='この項目を開く';
   const isMedia=n.type==='media';
   document.getElementById('detailTitle').textContent=isMedia?n.label:`${n.label} — ${n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||''}`;
   document.getElementById('detailText').textContent=isMedia?`${n.label}の稼働領域。関連するJob・異常・確認事項が周囲に集まり、優先度が上がるとPriority Coreへ浮上します。`:n.desc;
