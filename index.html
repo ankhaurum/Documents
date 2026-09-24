@@ -336,13 +336,11 @@ function update(dt){
     ? Math.min(W*.075,H*.22)
     : Math.min(W,H)*(W<500?.12:.10);
   const mixedRing = isLandscape()
-    ? Math.min(W*.13,H*.30)
+    ? Math.min(W*.155,Math.max(118,H*.37))
     : Math.min(W,H)*(W<500?.205:.16);
-  const mixedTargets = {
-    t_img:-0.78,
-    f_art:0.22,
-    worker:1.58
-  };
+  const mixedTargets = isLandscape()
+    ? { t_img:-1.28, f_art:0.20, worker:1.78 }
+    : { t_img:-0.78, f_art:0.22, worker:1.58 };
 
   for(const n of nodes){
     let tx=n.tx, ty=n.ty;
@@ -393,8 +391,9 @@ function update(dt){
     }
   }
 
-  // collision: 複合時は媒体・重要ノード間の余白を広く取る。
-  for(let pass=0;pass<(mode==='mixed'?3:1);pass++){
+  // collision: 複合時、とくにスマホ横向きでは円同士を物理的に重ねない。
+  const collisionPasses = mode==='mixed' ? (isLandscape()?6:4) : 1;
+  for(let pass=0;pass<collisionPasses;pass++){
     for(let i=0;i<nodes.length;i++){
       for(let j=i+1;j<nodes.length;j++){
         const a=nodes[i], b=nodes[j];
@@ -403,14 +402,34 @@ function update(dt){
         if(mode==='mixed'){
           const priority=(a.severity||0)>0 || (b.severity||0)>0;
           const hasMedia=a.type==='media' || b.type==='media';
-          gap=priority?24:(hasMedia?16:12);
+          gap=isLandscape()
+            ? (priority?30:(hasMedia?20:14))
+            : (priority?24:(hasMedia?16:12));
         }
         const min=(a.r||10)+(b.r||10)+gap;
         if(d<min){
-          const strength=mode==='mixed'?.052:.018;
-          const f=(min-d)/d*strength*dt;
-          a.x-=dx*f; a.y-=dy*f;
-          b.x+=dx*f; b.y+=dy*f;
+          const overlap=min-d;
+          const ux=dx/d, uy=dy/d;
+
+          if(mode==='mixed' && isLandscape()){
+            // Media circles are the visual anchors, so move jobs more than media.
+            if(a.type==='media' && b.type!=='media'){
+              b.x+=ux*overlap*.92; b.y+=uy*overlap*.92;
+              a.x-=ux*overlap*.08; a.y-=uy*overlap*.08;
+            }else if(b.type==='media' && a.type!=='media'){
+              a.x-=ux*overlap*.92; a.y-=uy*overlap*.92;
+              b.x+=ux*overlap*.08; b.y+=uy*overlap*.08;
+            }else{
+              a.x-=ux*overlap*.50; a.y-=uy*overlap*.50;
+              b.x+=ux*overlap*.50; b.y+=uy*overlap*.50;
+            }
+            a.vx*=.45; a.vy*=.45; b.vx*=.45; b.vy*=.45;
+          }else{
+            const strength=mode==='mixed'?.075:.018;
+            const f=overlap/d*strength*dt;
+            a.x-=dx*f; a.y-=dy*f;
+            b.x+=dx*f; b.y+=dy*f;
+          }
         }
       }
     }
@@ -514,7 +533,7 @@ function drawJob(n){
     ctx.strokeStyle=hexAlpha(col,.30);ctx.lineWidth=1;ctx.beginPath();ctx.arc(n.x,n.y,r+6+Math.sin(performance.now()/250)*2,0,Math.PI*2);ctx.stroke();
   }
 
-  const showLabel = s>0 || W>650;
+  const showLabel = s>0 || (W>650 && !isLandscape());
   if(showLabel){
     const font=`${s===2?'700':'600'} ${W<430?9:10}px -apple-system, sans-serif`;
     const tw=textWidth(n.label,font)+14;
