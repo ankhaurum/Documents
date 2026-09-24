@@ -381,7 +381,7 @@ function update(dt){
         ty=cy + (mp.y-cy)*toward;
       }else if(mode==='workerFail' && n.id==='worker'){
         tx=cx;
-        ty=cy + (isLandscape()?Math.min(W*.075,H*.23):Math.min(W,H)*.215);
+        ty=cy + (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*.185);
       }else if(n.severity===2){
         const a = n.id==='worker' ? 1.45 : (hash(n.id)%628)/100;
         tx=cx + Math.cos(a)*coreR*.92;
@@ -414,7 +414,9 @@ function update(dt){
       const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
       const baseSafe = mode==='mixed'
         ? (isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.195:.155))
-        : (isLandscape()?Math.min(W*.078,H*.23):Math.min(W,H)*(W<500?.17:.145));
+        : mode==='workerFail'
+          ? (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*(W<500?.145:.13))
+          : (isLandscape()?Math.min(W*.078,H*.23):Math.min(W,H)*(W<500?.17:.145));
       const safe=baseSafe+(n.r||10);
       if(d<safe){
         const push=(safe-d)/d;
