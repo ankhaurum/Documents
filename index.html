@@ -185,10 +185,9 @@ footer button.active{color:#eafcff;border-color:rgba(124,233,255,.45);background
 </div>
 
 <footer>
-  <button data-mode="twinowCritical" class="active">Twinow重大</button>
-  <button data-mode="foundiaWarn">Foundia警告</button>
-  <button data-mode="workerFail">Worker停止</button>
-  <button data-mode="mixed">複合</button>
+  <button data-mode="twinowCritical">重大</button>
+  <button data-mode="workerFail">停止</button>
+  <button data-mode="foundiaWarn">警告</button>
 </footer>
 </div>
 
@@ -222,9 +221,9 @@ const jobsBase = [
 
 let jobs = jobsBase.map(x=>({...x}));
 let nodes = [];
-let W=0,H=0,cx=0,cy=0,mode='twinowCritical',last=performance.now();
+let W=0,H=0,cx=0,cy=0,mode='mixed',last=performance.now();
 let selected=null;
-let priorityCount=1;
+let priorityCount=3;
 
 function isLandscape(){
   return W>H*1.35;
@@ -353,6 +352,19 @@ function update(dt){
           tx=cx;
           ty=cy + Math.min(W,H)*.245;
         }
+      }else if(mode==='twinowCritical' && n.id==='t_pay'){
+        const mp=mediaPos(media.find(m=>m.id==='twinow'));
+        const toward=isLandscape()?.50:.52;
+        tx=cx + (mp.x-cx)*toward;
+        ty=cy + (mp.y-cy)*toward;
+      }else if(mode==='foundiaWarn' && n.id==='f_img'){
+        const mp=mediaPos(media.find(m=>m.id==='foundia'));
+        const toward=isLandscape()?.54:.56;
+        tx=cx + (mp.x-cx)*toward;
+        ty=cy + (mp.y-cy)*toward;
+      }else if(mode==='workerFail' && n.id==='worker'){
+        tx=cx;
+        ty=cy + (isLandscape()?Math.min(W*.09,H*.27):Math.min(W,H)*.245);
       }else if(n.severity===2){
         const a = n.id==='worker' ? 1.45 : (hash(n.id)%628)/100;
         tx=cx + Math.cos(a)*coreR*.92;
@@ -380,33 +392,40 @@ function update(dt){
     n.vx*=Math.pow(.88,dt); n.vy*=Math.pow(.88,dt);
     n.x+=n.vx*dt; n.y+=n.vy*dt;
 
-    // 複合時はPriority Coreの周囲を予約領域にする。
-    if(mode==='mixed' && n.type==='job'){
+    // Priority Coreの数字・リングへ重要ノードを重ねない。
+    if(n.type==='job' && (n.severity||0)>0){
       const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
-      const safe=(isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.195:.155))+(n.r||10);
+      const baseSafe = mode==='mixed'
+        ? (isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.195:.155))
+        : (isLandscape()?Math.min(W*.078,H*.23):Math.min(W,H)*(W<500?.17:.145));
+      const safe=baseSafe+(n.r||10);
       if(d<safe){
         const push=(safe-d)/d;
         n.x+=dx*push;
         n.y+=dy*push;
-        n.vx*=.55; n.vy*=.55;
+        n.vx*=.50; n.vy*=.50;
       }
     }
   }
 
-  // collision: 複合時、とくにスマホ横向きでは円同士を物理的に重ねない。
-  const collisionPasses = mode==='mixed' ? (isLandscape()?6:4) : 1;
+  // collision: 複合・単独どちらでも媒体/重要ノードを重ねない。
+  const collisionPasses = mode==='mixed'
+    ? (isLandscape()?6:4)
+    : (isLandscape()?5:3);
   for(let pass=0;pass<collisionPasses;pass++){
     for(let i=0;i<nodes.length;i++){
       for(let j=i+1;j<nodes.length;j++){
         const a=nodes[i], b=nodes[j];
         const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1;
         let gap=7;
+        const priority=(a.severity||0)>0 || (b.severity||0)>0;
+        const hasMedia=a.type==='media' || b.type==='media';
         if(mode==='mixed'){
-          const priority=(a.severity||0)>0 || (b.severity||0)>0;
-          const hasMedia=a.type==='media' || b.type==='media';
           gap=isLandscape()
             ? (priority?30:(hasMedia?20:14))
             : (priority?24:(hasMedia?16:12));
+        }else if(priority){
+          gap=isLandscape() ? (hasMedia?24:20) : (hasMedia?22:18);
         }
         const min=(a.r||10)+(b.r||10)+gap;
         if(d<min){
@@ -674,7 +693,7 @@ document.getElementById('closeDetail').onclick=()=>document.getElementById('deta
 document.getElementById('closeDetail').addEventListener('touchend',e=>{e.preventDefault();document.getElementById('detail').classList.remove('show')},{passive:false});
 document.getElementById('detailAction').onclick=()=>alert('本番では対象画面へ遷移します。デモでは遷移を省略しています。');
 
-resize(); setMode('twinowCritical'); requestAnimationFrame(loop);
+resize(); setMode('mixed'); requestAnimationFrame(loop);
 </script>
 </body>
 </html>
