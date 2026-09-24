@@ -208,16 +208,23 @@ const media = [
 ];
 
 const jobsBase = [
- {id:'t_pub', media:'twinow', label:'公開待ち', severity:0, count:2, desc:'Twinowの記事公開待ち。通常キューで処理中。'},
- {id:'t_img', media:'twinow', label:'画像生成', severity:0, count:1, desc:'画像生成ジョブ。現在は正常に処理されています。'},
- {id:'t_pay', media:'twinow', label:'決済', severity:0, count:1, desc:'店舗側の決済系イベント。通常監視中。'},
- {id:'f_img', media:'foundia', label:'画像', severity:0, count:2, desc:'Foundiaの記事画像生成。'},
- {id:'f_art', media:'foundia', label:'記事', severity:0, count:3, desc:'Foundiaの記事生成キュー。'},
- {id:'c_art', media:'carwhip', label:'記事', severity:0, count:2, desc:'carwhipの記事生成。'},
- {id:'cr_art', media:'crypto', label:'記事', severity:0, count:1, desc:'cryptocurrency-jp.netの記事処理。'},
- {id:'s_art', media:'smap', label:'記事', severity:0, count:1, desc:'smaphomeister.netの記事処理。'},
- {id:'a_art', media:'aitrades', label:'記事', severity:0, count:1, desc:'ai-trades.comの記事処理。'},
- {id:'worker', media:'system', label:'Worker', severity:0, count:1, desc:'AI Workerの稼働状態。'}
+  {id:'t_access', media:'twinow', status:'critical', baseSeverity:2, severity:0, count:2, label:'店舗ページ閲覧障害', desc:'公開済み店舗ページの一部で閲覧エラーを検知。送客導線に影響しています。'},
+  {id:'t_reco', media:'twinow', status:'warning', baseSeverity:1, severity:0, count:4, label:'レコメンド遅延', desc:'周辺レコメンドの応答時間が基準値を超過しています。'},
+
+  {id:'f_image_worker', media:'foundia', status:'stop', baseSeverity:2, severity:0, count:1, label:'画像生成Worker停止', desc:'記事画像生成Workerが停止し、新規記事の画像生成が進んでいません。'},
+  {id:'f_ga4', media:'foundia', status:'warning', baseSeverity:1, severity:0, count:1, label:'GA4流入急減', desc:'直近平均に対して流入が急減。計測異常または流入低下の確認が必要です。'},
+
+  {id:'c_cta', media:'carwhip', status:'critical', baseSeverity:2, severity:0, count:3, label:'CTAリンク切れ', desc:'主要記事のCTAリンク切れを検知。収益導線に影響しています。'},
+  {id:'c_ctr', media:'carwhip', status:'warning', baseSeverity:1, severity:0, count:5, label:'CTR急低下', desc:'検索流入上位記事のCTRが基準値を下回っています。'},
+
+  {id:'cr_scheduler', media:'crypto', status:'stop', baseSeverity:2, severity:0, count:1, label:'更新Scheduler停止', desc:'記事自動生成・更新Schedulerが停止しています。'},
+  {id:'cr_data', media:'crypto', status:'warning', baseSeverity:1, severity:0, count:2, label:'参照データ更新遅延', desc:'外部参照データの更新時刻が許容範囲を超えています。'},
+
+  {id:'s_cta', media:'smap', status:'critical', baseSeverity:2, severity:0, count:2, label:'送客CTA遷移障害', desc:'問い合わせ・送客CTAの一部で正常に遷移しない状態を検知。'},
+  {id:'s_bounce', media:'smap', status:'warning', baseSeverity:1, severity:0, count:2, label:'LP離脱率急上昇', desc:'主要LPの離脱率が直近平均を大きく上回っています。'},
+
+  {id:'a_queue', media:'aitrades', status:'stop', baseSeverity:2, severity:0, count:1, label:'記事生成Queue停止', desc:'AI記事生成Jobが連続失敗しQueue処理が停止しています。'},
+  {id:'a_check', media:'aitrades', status:'warning', baseSeverity:1, severity:0, count:3, label:'AI Check失敗率上昇', desc:'公開前AI Checkの失敗率が基準値を超えています。'}
 ];
 
 let jobs = jobsBase.map(x=>({...x}));
@@ -263,7 +270,7 @@ function rebuild(){
     const p=mediaPos(m);
     nodes.push({...m,type:'media',x:old.get(m.id)?.x??p.x,y:old.get(m.id)?.y??p.y,vx:0,vy:0,tx:p.x,ty:p.y,r:isLandscape()?24:(W<500?26:31)});
   });
-  jobs.forEach((j,i)=>{
+  jobs.filter(j=>(j.severity||0)>0).forEach((j,i)=>{
     let tx,ty;
     if(j.media==='system'){
       tx=cx;ty=cy+Math.min(W,H)*.22;
@@ -283,33 +290,40 @@ function rebuild(){
 }
 
 function setMode(next){
-  mode=next; jobs=jobsBase.map(x=>({...x}));
+  mode=next;
+  jobs=jobsBase.map(x=>({...x,severity:0}));
+
   let title='';
   let meta='';
   let human=false;
+  let activeIds=[];
+
   if(next==='twinowCritical'){
-    const x=jobs.find(j=>j.id==='t_pay'); x.severity=2; x.label='決済エラー'; x.desc='Twinow店舗決済で異常を検知。人間確認が必要です。';
-    title='Twinow：決済エラーを最優先で確認';
-    meta='影響範囲：店舗ポータル / 決済フロー';
+    activeIds=jobs.filter(j=>j.status==='critical').map(j=>j.id);
+    title='重大 3件を優先確認';
+    meta='Twinow / carwhip / smaphomeister';
+    human=true;
+  }else if(next==='workerFail'){
+    activeIds=jobs.filter(j=>j.status==='stop').map(j=>j.id);
+    title='停止 3件を優先確認';
+    meta='Foundia / crypto-jp / ai-trades';
     human=true;
   }else if(next==='foundiaWarn'){
-    const x=jobs.find(j=>j.id==='f_img'); x.severity=1; x.label='画像欠落'; x.desc='Foundiaの一部記事で画像生成が完了していません。再生成候補です。';
-    title='Foundia：画像欠落を確認';
-    meta='注意項目 1件 / 再生成候補';
-  }else if(next==='workerFail'){
-    const x=jobs.find(j=>j.id==='worker'); x.severity=2; x.label='Worker停止'; x.desc='AI Workerの応答が停止。複数媒体の生成処理に影響する可能性があります。';
-    title='共通Worker停止：媒体横断で最優先';
-    meta='影響範囲：記事生成 / 画像生成 / 複数媒体';
-    human=true;
+    activeIds=jobs.filter(j=>j.status==='warning').map(j=>j.id);
+    title='警告 6件を確認';
+    meta='6媒体で異常値・遅延を検知';
   }else if(next==='mixed'){
-    Object.assign(jobs.find(j=>j.id==='t_img'),{severity:1,label:'画像再生成',desc:'Twinowの画像生成で再処理が必要な項目があります。'});
-    Object.assign(jobs.find(j=>j.id==='f_art'),{severity:1,label:'記事確認',desc:'Foundiaの記事生成で人間確認が必要な項目があります。'});
-    Object.assign(jobs.find(j=>j.id==='worker'),{severity:2,label:'Worker不安定',desc:'Workerの応答遅延を検知。複数媒体へ波及する前に確認が必要です。'});
-    title='共通Workerの不安定化を最優先で確認';
-    meta='注意項目 2件 / 優先対応 1件';
+    activeIds=['t_access','f_image_worker','c_ctr','cr_data','s_cta','a_queue'];
+    title='Aifate全体：6件の要対応を優先確認';
+    meta='重大 2件 / 停止 2件 / 警告 2件';
     human=true;
   }
-  priorityCount = jobs.filter(j=>j.severity>0).length;
+
+  jobs.forEach(j=>{
+    if(activeIds.includes(j.id)) j.severity=j.baseSeverity;
+  });
+
+  priorityCount=jobs.filter(j=>(j.severity||0)>0).length;
   document.getElementById('priorityTitle').textContent=title;
   document.getElementById('priorityMeta').textContent=meta;
   document.getElementById('priorityPulse').style.display=human?'inline-flex':'none';
@@ -317,7 +331,6 @@ function setMode(next){
   document.getElementById('detail').classList.remove('show');
   rebuild();
 }
-
 document.querySelectorAll('footer button[data-mode]').forEach(b=>{
   b.addEventListener('click',()=>setMode(b.dataset.mode));
   b.addEventListener('touchend',e=>{e.preventDefault();setMode(b.dataset.mode);},{passive:false});
@@ -336,145 +349,96 @@ document.getElementById('refreshBtn').addEventListener('touchend',e=>{
 
 function severityColor(s){return s===2?'#ff677b':s===1?'#ffd86a':'#59d98e'}
 
-function update(dt){
-  const activeCritical = nodes.filter(n=>n.type==='job' && n.severity===2);
-  const coreR = isLandscape()
-    ? Math.min(W*.075,H*.22)
-    : Math.min(W,H)*(W<500?.12:.10);
-  const mixedRing = isLandscape()
-    ? Math.min(W*.155,Math.max(118,H*.37))
-    : Math.min(W,H)*(W<500?.205:.16);
-  const mixedTargets = isLandscape()
-    ? { t_img:-1.28, f_art:0.20, worker:1.78 }
-    : null;
+function priorityDistance(n){
+  if(isLandscape()){
+    if(n.status==='warning') return Math.min(W*.085,H*.27);
+    if(n.status==='stop') return Math.min(W*.060,H*.19);
+    return Math.min(W*.055,H*.175);
+  }
+  const s=Math.min(W,H);
+  if(n.status==='warning') return s*.23;
+  if(n.status==='stop') return s*.185;
+  return s*.165;
+}
 
+function update(dt){
   for(const n of nodes){
     let tx=n.tx, ty=n.ty;
-    if(n.type==='job'){
-      if(mode==='mixed' && n.severity>0){
-        if(isLandscape() && n.id==='worker'){
-          tx=cx;
-          ty=cy + Math.min(W*.060,H*.19);
-        }else if(isLandscape() && mixedTargets[n.id]!==undefined){
-          const a=mixedTargets[n.id];
-          const ring=n.severity===2?mixedRing:mixedRing*1.08;
-          tx=cx + Math.cos(a)*ring;
-          ty=cy + Math.sin(a)*ring*.92;
-        }else if(!isLandscape() && (n.id==='t_img' || n.id==='f_art')){
-          // 媒体起点からCoreへ浮上していることが位置だけで分かるようにする。
-          const mediaId=n.id==='t_img'?'twinow':'foundia';
-          const mp=mediaPos(media.find(m=>m.id===mediaId));
-          const toward=.62;
-          tx=cx + (mp.x-cx)*toward;
-          ty=cy + (mp.y-cy)*toward;
-        }else if(!isLandscape() && n.id==='worker'){
-          // 共通Workerは媒体に属さないため、単独停止と同じ第一外枠付近へ。
-          tx=cx;
-          ty=cy + Math.min(W,H)*.185;
-        }
-      }else if(mode==='twinowCritical' && n.id==='t_pay'){
-        const mp=mediaPos(media.find(m=>m.id==='twinow'));
-        const toward=isLandscape()?.45:.47;
-        tx=cx + (mp.x-cx)*toward;
-        ty=cy + (mp.y-cy)*toward;
-      }else if(mode==='foundiaWarn' && n.id==='f_img'){
-        const mp=mediaPos(media.find(m=>m.id==='foundia'));
-        const toward=isLandscape()?.54:.56;
-        tx=cx + (mp.x-cx)*toward;
-        ty=cy + (mp.y-cy)*toward;
-      }else if(mode==='workerFail' && n.id==='worker'){
+
+    if(n.type==='job' && (n.severity||0)>0){
+      const dist=priorityDistance(n);
+
+      if(n.media==='system'){
         tx=cx;
-        ty=cy + (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*.185);
-      }else if(n.severity===2){
-        const a = n.id==='worker' ? 1.45 : (hash(n.id)%628)/100;
-        tx=cx + Math.cos(a)*coreR*.92;
-        ty=cy + Math.sin(a)*coreR*.76;
-      } else if(n.severity===1){
-        tx = n.tx + (cx-n.tx)*.23;
-        ty = n.ty + (cy-n.ty)*.23;
-      } else if(activeCritical.length){
-        tx = n.tx + (n.tx-cx)*.05;
-        ty = n.ty + (n.ty-cy)*.05;
+        ty=cy+dist;
+      }else{
+        const m=media.find(x=>x.id===n.media);
+        const mp=mediaPos(m);
+        const dx=mp.x-cx, dy=mp.y-cy;
+        const d=Math.hypot(dx,dy)||1;
+        tx=cx + dx/d*dist;
+        ty=cy + dy/d*dist;
       }
     }
 
-    const k=n.type==='media'?.010:(mode==='mixed' && n.severity>0?.026:.018);
+    const k=n.type==='media'?.010:.028;
     n.vx += (tx-n.x)*k*dt;
     n.vy += (ty-n.y)*k*dt;
 
-    if(n.type==='job' && n.severity<2){
+    if(n.type==='job' && n.status==='warning'){
       const t=performance.now()/1000;
-      const drift = mode==='mixed' && n.severity>0 ? .0012 : .003;
-      n.vx += Math.sin(t*.45 + hash(n.id))*drift*dt;
-      n.vy += Math.cos(t*.38 + hash(n.id)*.7)*drift*dt;
+      n.vx += Math.sin(t*.45 + hash(n.id))*.0010*dt;
+      n.vy += Math.cos(t*.38 + hash(n.id)*.7)*.0010*dt;
     }
 
-    n.vx*=Math.pow(.88,dt); n.vy*=Math.pow(.88,dt);
-    n.x+=n.vx*dt; n.y+=n.vy*dt;
+    n.vx*=Math.pow(.86,dt);
+    n.vy*=Math.pow(.86,dt);
+    n.x+=n.vx*dt;
+    n.y+=n.vy*dt;
 
-    // Priority Coreの数字・リングへ重要ノードを重ねない。
     if(n.type==='job' && (n.severity||0)>0){
       const dx=n.x-cx, dy=n.y-cy, d=Math.hypot(dx,dy)||1;
-      const baseSafe = (mode==='mixed' && n.id==='worker')
-        ? (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*(W<500?.145:.13))
-        : mode==='mixed'
-          ? (isLandscape()?Math.min(W*.095,H*.255):Math.min(W,H)*(W<500?.195:.155))
-          : mode==='workerFail'
-            ? (isLandscape()?Math.min(W*.060,H*.19):Math.min(W,H)*(W<500?.145:.13))
-            : (isLandscape()?Math.min(W*.078,H*.23):Math.min(W,H)*(W<500?.17:.145));
-      const safe=baseSafe+(n.r||10);
+      const dist=priorityDistance(n);
+      const safe=dist*.90;
       if(d<safe){
         const push=(safe-d)/d;
         n.x+=dx*push;
         n.y+=dy*push;
-        n.vx*=.50; n.vy*=.50;
+        n.vx*=.45;
+        n.vy*=.45;
       }
     }
   }
 
-  // collision: 複合・単独どちらでも媒体/重要ノードを重ねない。
-  const collisionPasses = mode==='mixed'
-    ? (isLandscape()?6:4)
-    : (isLandscape()?5:3);
-  for(let pass=0;pass<collisionPasses;pass++){
+  // Keep media fields as anchors and push issue nodes away from overlaps.
+  const passes=isLandscape()?6:5;
+  for(let pass=0;pass<passes;pass++){
     for(let i=0;i<nodes.length;i++){
       for(let j=i+1;j<nodes.length;j++){
         const a=nodes[i], b=nodes[j];
         const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1;
-        let gap=7;
-        const priority=(a.severity||0)>0 || (b.severity||0)>0;
         const hasMedia=a.type==='media' || b.type==='media';
-        if(mode==='mixed'){
-          gap=isLandscape()
-            ? (priority?30:(hasMedia?20:14))
-            : (priority?24:(hasMedia?16:12));
-        }else if(priority){
-          gap=isLandscape() ? (hasMedia?24:20) : (hasMedia?22:18);
-        }
+        const bothJobs=a.type==='job' && b.type==='job';
+        const gap=hasMedia?18:(bothJobs?16:10);
         const min=(a.r||10)+(b.r||10)+gap;
+
         if(d<min){
           const overlap=min-d;
           const ux=dx/d, uy=dy/d;
 
-          if(hasMedia || priority){
-            // Media circles are anchors. Move job/issue nodes away strongly in all modes.
-            if(a.type==='media' && b.type!=='media'){
-              b.x+=ux*overlap*.94; b.y+=uy*overlap*.94;
-              a.x-=ux*overlap*.06; a.y-=uy*overlap*.06;
-            }else if(b.type==='media' && a.type!=='media'){
-              a.x-=ux*overlap*.94; a.y-=uy*overlap*.94;
-              b.x+=ux*overlap*.06; b.y+=uy*overlap*.06;
-            }else{
-              a.x-=ux*overlap*.50; a.y-=uy*overlap*.50;
-              b.x+=ux*overlap*.50; b.y+=uy*overlap*.50;
-            }
-            a.vx*=.42; a.vy*=.42; b.vx*=.42; b.vy*=.42;
+          if(a.type==='media' && b.type==='job'){
+            b.x+=ux*overlap*.96; b.y+=uy*overlap*.96;
+            a.x-=ux*overlap*.04; a.y-=uy*overlap*.04;
+          }else if(b.type==='media' && a.type==='job'){
+            a.x-=ux*overlap*.96; a.y-=uy*overlap*.96;
+            b.x+=ux*overlap*.04; b.y+=uy*overlap*.04;
           }else{
-            const strength=mode==='mixed'?.075:.028;
-            const f=overlap/d*strength*dt;
-            a.x-=dx*f; a.y-=dy*f;
-            b.x+=dx*f; b.y+=dy*f;
+            a.x-=ux*overlap*.50; a.y-=uy*overlap*.50;
+            b.x+=ux*overlap*.50; b.y+=uy*overlap*.50;
           }
+
+          a.vx*=.40; a.vy*=.40;
+          b.vx*=.40; b.vy*=.40;
         }
       }
     }
@@ -654,11 +618,13 @@ function showCoreDetail(){
 
   const tags=document.getElementById('detailTags');
   tags.innerHTML='';
-  const critical=priorityJobs.filter(n=>n.severity===2).length;
-  const warning=priorityJobs.filter(n=>n.severity===1).length;
+  const critical=priorityJobs.filter(n=>n.status==='critical').length;
+  const stopped=priorityJobs.filter(n=>n.status==='stop').length;
+  const warning=priorityJobs.filter(n=>n.status==='warning').length;
   [
     `合計 ${priorityJobs.length}件`,
     critical?`重大 ${critical}件`:null,
+    stopped?`停止 ${stopped}件`:null,
     warning?`警告 ${warning}件`:null
   ].filter(Boolean).forEach(t=>{
     const s=document.createElement('span');
@@ -677,7 +643,7 @@ function showCoreDetail(){
     r.className='row';
     const key=document.createElement('div');
     key.className='key';
-    key.textContent=(n.id==='worker' || /停止/.test(n.label))?'停止':(n.severity===2?'重大':'警告');
+    key.textContent=n.status==='stop'?'停止':(n.status==='critical'?'重大':'警告');
     const val=document.createElement('div');
     val.className='val';
     val.textContent=`${idx+1}. ${mediaName}｜${n.label}｜${n.desc}`;
@@ -717,11 +683,7 @@ function showDetail(n){
     mediaJobs.forEach((job,idx)=>{
       const r=document.createElement('div');r.className='row';
       const key=document.createElement('div');key.className='key';
-      if(job.id==='worker' || /停止/.test(job.label)){
-        key.textContent='停止';
-      }else{
-        key.textContent=job.severity===2?'重大':'警告';
-      }
+      key.textContent=job.status==='stop'?'停止':(job.status==='critical'?'重大':'警告');
       const val=document.createElement('div');val.className='val';
       val.textContent=`${idx+1}. ${job.label}｜${job.count||1}件`;
       r.append(key,val);list.appendChild(r);
@@ -744,11 +706,11 @@ function showDetail(n){
   document.getElementById('detailTitle').textContent=`${n.label} — ${n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||''}`;
   detailText.textContent=n.desc;
 
-  const arr=[n.severity===2?'優先対応':n.severity===1?'注意':'正常',`件数 ${n.count||1}`,n.media==='system'?'媒体横断':'媒体内'];
+  const arr=[n.status==='stop'?'停止':(n.status==='critical'?'重大':'警告'),`件数 ${n.count||1}`,n.media==='system'?'媒体横断':'媒体内'];
   arr.forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent=t;tags.appendChild(s)});
 
   const mediaName=n.media==='system'?'Aifate共通':media.find(m=>m.id===n.media)?.label||'';
-  const severity=n.severity===2?'重大 / 優先対応':n.severity===1?'注意':'正常';
+  const severity=n.status==='stop'?'停止':(n.status==='critical'?'重大':'警告');
   [['重要度',severity],['件数',`${n.count||1}件`],['対象',mediaName],['内容',n.desc]].forEach(([k,v])=>{
     const r=document.createElement('div');r.className='row';
     const key=document.createElement('div');key.className='key';key.textContent=k;
