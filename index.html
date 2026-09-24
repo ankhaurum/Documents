@@ -314,9 +314,12 @@ function setMode(next){
     title='警告 6件を確認';
     meta='6媒体で異常値・遅延を検知';
   }else if(next==='mixed'){
-    activeIds=['t_access','f_image_worker','c_ctr','cr_data','s_cta','a_queue'];
-    title='Aifate全体：6件の要対応を優先確認';
-    meta='重大 2件 / 停止 2件 / 警告 2件';
+    activeIds=jobs.map(j=>j.id);
+    const criticalCount=jobs.filter(j=>j.status==='critical').length;
+    const stopCount=jobs.filter(j=>j.status==='stop').length;
+    const warningCount=jobs.filter(j=>j.status==='warning').length;
+    title=`Aifate全体：${jobs.length}件の要対応を優先確認`;
+    meta=`重大 ${criticalCount}件 / 停止 ${stopCount}件 / 警告 ${warningCount}件`;
     human=true;
   }
 
