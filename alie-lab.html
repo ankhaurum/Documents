@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>ALIE — できたんかーい Prototype</title>
+<style>
+:root{--bg:#071018;--panel:#0d1a25;--panel2:#112331;--line:rgba(255,255,255,.10);--text:#eef8ff;--muted:#8ea5b7;--cyan:#7ce9ff;--green:#66dfa0;--yellow:#ffd86a;--pink:#ff9ad5;--shadow:0 18px 50px rgba(0,0,0,.34)}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:radial-gradient(circle at 50% -10%,rgba(72,158,214,.18),transparent 34%),linear-gradient(180deg,#071018,#04090e 74%);min-height:100vh}button,input,textarea{font:inherit}.app{max-width:1180px;margin:0 auto;padding:12px 12px 88px}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.brand{display:flex;gap:10px;align-items:center}.orb{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(124,233,255,.45);color:var(--cyan);font-weight:800;box-shadow:0 0 24px rgba(124,233,255,.12) inset}.brand strong{display:block;font-size:14px;letter-spacing:.08em}.brand span{display:block;font-size:9px;color:var(--muted);margin-top:2px}.back{color:#d9f7ff;text-decoration:none;font-size:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:rgba(255,255,255,.035)}
+.hero{padding:16px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(15,30,43,.96),rgba(8,18,28,.94));box-shadow:var(--shadow);margin-bottom:12px}.kicker{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#7f9caf}.hero h1{font-size:23px;line-height:1.35;margin:6px 0 4px}.hero p{font-size:11px;line-height:1.65;color:#9cb0bf;margin:0}.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.chip{font-size:9px;border:1px solid var(--line);border-radius:999px;padding:5px 7px;background:rgba(255,255,255,.035)}.chip.ok{color:#d8ffec;border-color:rgba(102,223,160,.26);background:rgba(102,223,160,.07)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.card{border:1px solid var(--line);border-radius:17px;background:linear-gradient(180deg,rgba(16,32,45,.94),rgba(8,18,28,.94));padding:14px;box-shadow:var(--shadow);cursor:pointer;transition:.18s transform,.18s border-color}.card:hover{transform:translateY(-2px)}.card.active{border-color:rgba(124,233,255,.45)}.num{font-size:9px;color:#7892a5}.card h2{font-size:16px;margin:5px 0}.card p{font-size:10px;color:#97acbc;line-height:1.6;margin:0 0 10px}.wow{font-size:10px;color:#dffcff;padding:8px 9px;border-radius:10px;background:rgba(124,233,255,.06);border:1px solid rgba(124,233,255,.15)}
+.workspace{margin-top:12px;border:1px solid var(--line);border-radius:18px;background:rgba(8,18,28,.94);box-shadow:var(--shadow);overflow:hidden}.workhead{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center}.workhead strong{font-size:13px}.workhead span{font-size:9px;color:var(--muted)}.flow{display:grid;grid-template-columns:.9fr 1.1fr;min-height:430px}.qa{padding:14px;border-right:1px solid var(--line)}.answer{padding:14px;background:linear-gradient(180deg,rgba(13,28,40,.55),rgba(8,18,28,.18))}.q{font-size:11px;color:#cbdce8;margin-bottom:7px}.options{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}.opt{border:1px solid var(--line);background:rgba(255,255,255,.035);color:#dbeaf3;border-radius:999px;padding:8px 10px;font-size:10px}.opt.sel{border-color:rgba(124,233,255,.42);background:rgba(124,233,255,.09);color:white}.input{width:100%;border:1px solid var(--line);border-radius:12px;background:#08131d;color:var(--text);padding:10px;min-height:92px;resize:vertical;font-size:11px;outline:none}.run{width:100%;margin-top:10px;border:1px solid rgba(124,233,255,.35);background:rgba(124,233,255,.10);color:#e9fdff;border-radius:12px;padding:11px;font-weight:700}.resultTitle{display:flex;justify-content:space-between;align-items:center;gap:8px}.resultTitle strong{font-size:14px}.tag{font-size:9px;border-radius:999px;padding:5px 7px;border:1px solid var(--line);color:#b8cbd7}.preview{margin-top:10px;padding:14px;border-radius:15px;background:linear-gradient(145deg,rgba(124,233,255,.10),rgba(255,154,213,.07));border:1px solid rgba(255,255,255,.08)}.preview h3{font-size:18px;margin:0 0 6px}.preview p{font-size:10px;color:#b3c5d1;line-height:1.55;margin:0}.deliver{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.deliver div{padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.025)}.deliver b{font-size:10px;display:block}.deliver span{font-size:9px;color:#8fa4b4;display:block;margin-top:3px;line-height:1.45}.shot{position:relative;height:190px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(145deg,#173144,#0c1d29);overflow:hidden;margin-top:10px}.shot:before,.shot:after{content:"";position:absolute;background:rgba(255,255,255,.19)}.shot:before{left:33.33%;top:0;bottom:0;width:1px;box-shadow:calc(33.33vw/3) 0 0 rgba(255,255,255,.19)}.shot:after{top:33.33%;left:0;right:0;height:1px;box-shadow:0 63px 0 rgba(255,255,255,.19)}.plate{position:absolute;width:118px;height:78px;border-radius:50%;background:radial-gradient(circle at 50% 45%,#f1b04c 0 20%,#b9662d 21% 46%,#e8e0d0 47% 57%,#d5d9de 58%);left:54%;top:49%;transform:translate(-50%,-50%) rotate(-8deg);box-shadow:0 14px 30px rgba(0,0,0,.35)}.focus{position:absolute;left:63%;top:34%;width:14px;height:14px;border:2px solid var(--cyan);border-radius:50%;box-shadow:0 0 14px rgba(124,233,255,.55)}.guide{position:absolute;left:9px;bottom:8px;font-size:9px;background:rgba(4,10,15,.72);border:1px solid var(--line);border-radius:9px;padding:6px 7px;color:#d8e8f2}.insight{margin-top:10px;padding:10px;border:1px solid rgba(102,223,160,.16);background:rgba(102,223,160,.055);border-radius:12px;font-size:10px;line-height:1.6;color:#cff5df}.future{margin-top:12px;padding:12px 14px;border:1px dashed rgba(255,255,255,.14);border-radius:16px;color:#90a5b5;font-size:10px;line-height:1.6}.bottom{position:fixed;left:0;right:0;bottom:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(4,9,14,0),rgba(4,9,14,.97) 35%);display:flex;justify-content:center;gap:8px;z-index:30}.bottom a{font-size:10px;color:#dffaff;text-decoration:none;border:1px solid rgba(124,233,255,.25);background:#0a1823;border-radius:999px;padding:10px 13px}
+@media(max-width:820px){.cards{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.qa{border-right:0;border-bottom:1px solid var(--line)}.deliver{grid-template-columns:1fr 1fr}.hero h1{font-size:19px}}@media(max-width:480px){.app{padding:9px 8px 86px}.hero,.card,.qa,.answer{padding:11px}.brand span{display:none}.hero h1{font-size:17px}.deliver{grid-template-columns:1fr}.shot{height:170px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><div class="brand"><div class="orb">A</div><div><strong>ALIE</strong><span>LOCAL INTENT ENGINE / ZERO-DATA WOW LAB</span></div></div><a class="back" href="./">HUB HOME</a></div>
+
+  <section class="hero">
+    <div class="kicker">Prototype / Store-side ALIE</div>
+    <h1>相談で終わらない。<br>店長の代わりに「1個、完成」させる。</h1>
+    <p>店舗データ0件でも開始できる3つの実験機能。正解を決める画面ではなく、「これ、できたんかーい！」が起きるかを見るための叩き台。</p>
+    <div class="chips"><span class="chip ok">データ0件でも可</span><span class="chip">スマホ前提</span><span class="chip">ALIE実験機能</span><span class="chip">Basic / Plus候補</span></div>
+  </section>
+
+  <div class="cards">
+    <section class="card active" data-mode="sell"><div class="num">EXPERIMENT 01</div><h2>これ、売れる形にして</h2><p>商品やサービスを1つ渡すだけ。画像・見せ方・文言・販促物まで、一式にして返す。</p><div class="wow">制作会社に頼む前に、もう出来上がっている。</div></section>
+    <section class="card" data-mode="now"><div class="num">EXPERIMENT 02</div><h2>今日ヒマ。なんとかして</h2><p>天気・時間帯・余っている商品などを聞き、その日の集客セットを即興で作る。</p><div class="wow">「今日の施策、もうできたんかーい！」</div></section>
+    <section class="card" data-mode="photo"><div class="num">EXPERIMENT 03</div><h2>この写真、うまく撮りたい</h2><p>AIが撮影前に構図を教える。店長のスマホを“プロの撮影アシスタント”に変える。</p><div class="wow">撮る前から、どこに置けばいいか分かる。</div></section>
+  </div>
+
+  <section class="workspace">
+    <div class="workhead"><div><strong id="workTitle">これ、売れる形にして</strong><br><span id="workSub">3つだけ答える → ALIEが完成物まで返す</span></div><span>DEMO DATA</span></div>
+    <div class="flow">
+      <div class="qa" id="qa"></div>
+      <div class="answer" id="answer"></div>
+    </div>
+  </section>
+
+  <div class="future"><b>次段階：</b> Twinow・響・GA4・Search Console等のデータが溜まったら「もったいないところ探して」を追加し、<b>発見 → 改善 → 実行 → 観測 → 次の改善</b>までALIEが回す。</div>
+</div>
+<div class="bottom"><a href="./experiment.html">Growth Labを見る</a><a href="./">Priority Fieldへ戻る</a></div>
+<script>
+const state={mode:'sell'};
+const cards=[...document.querySelectorAll('.card')];
+const qa=document.getElementById('qa'), answer=document.getElementById('answer'), title=document.getElementById('workTitle'), sub=document.getElementById('workSub');
+const modes={
+ sell:{title:'これ、売れる形にして',sub:'3つだけ答える → ALIEが完成物まで返す'},
+ now:{title:'今日ヒマ。なんとかして',sub:'状況を3つ答える → 今日使える集客セットを返す'},
+ photo:{title:'この写真、うまく撮りたい',sub:'撮影対象を選ぶ → 構図・位置・撮り方をその場で指示'}
+};
+function opt(label,selected=false){return `<button class="opt${selected?' sel':''}">${label}</button>`}
+function bindOptions(){document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const row=b.parentElement;row.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')})}
+function render(){title.textContent=modes[state.mode].title;sub.textContent=modes[state.mode].sub;cards.forEach(c=>c.classList.toggle('active',c.dataset.mode===state.mode));
+ if(state.mode==='sell'){
+  qa.innerHTML=`<div class="q">① 何を売りたい？</div><div class="options">${opt('料理',true)}${opt('美容メニュー')}${opt('商品')}${opt('サービス')}</div><div class="q">② どこで使う？</div><div class="options">${opt('Twinow',true)}${opt('Instagram')}${opt('X')}${opt('店頭POP')}</div><div class="q">③ 店長の一言だけください</div><textarea class="input">唐揚げをもっと売りたい。ボリューム感は出したいけど、安っぽくはしたくない。</textarea><button class="run" onclick="showSell()">ALIEに完成させてもらう</button>`;
+  answer.innerHTML=`<div class="resultTitle"><strong>まだ生成していません</strong><span class="tag">3 inputs</span></div><div class="preview"><h3>店長の入力 → 完成物へ</h3><p>このエリアに、画像・商品名・説明文・POP・SNS投稿文まで一式が出る想定です。</p></div>`;
+ }else if(state.mode==='now'){
+  qa.innerHTML=`<div class="q">① 今日の状況は？</div><div class="options">${opt('雨',true)}${opt('暑い')}${opt('平日')}${opt('客足が弱い')}</div><div class="q">② いつ弱い？</div><div class="options">${opt('14〜17時',true)}${opt('ランチ後')}${opt('夜')}</div><div class="q">③ 使いたいもの・余りそうなもの</div><textarea class="input">唐揚げが少し余りそう。値下げだけはしたくない。</textarea><button class="run" onclick="showNow()">今日の集客セットを作る</button>`;
+  answer.innerHTML=`<div class="resultTitle"><strong>今日の状況から即興生成</strong><span class="tag">Ad-lib</span></div><div class="preview"><h3>雨 × 14〜17時 × 唐揚げ</h3><p>クーポンだけではなく、売り方・画像・投稿・終了時間までを一式にします。</p></div>`;
+ }else{
+  qa.innerHTML=`<div class="q">① 何を撮る？</div><div class="options">${opt('料理',true)}${opt('商品')}${opt('人物')}${opt('店内')}</div><div class="q">② どこで使う？</div><div class="options">${opt('Instagram',true)}${opt('Twinow')}${opt('Google')}${opt('メニュー')}</div><div class="q">③ いま困っていること</div><textarea class="input">真ん中に置くだけで、いつも同じ写真になる。</textarea><button class="run" onclick="showPhoto()">撮影ガイドを出す</button>`;
+  answer.innerHTML=`<div class="resultTitle"><strong>撮影前ガイド</strong><span class="tag">Camera Coach</span></div><div class="shot"><div class="plate"></div><div class="focus"></div><div class="guide">主役を右上の交点へ。余白を左に残す。</div></div><div class="insight">ALIE：今回は日の丸構図を避けて、三分割の交点に主役を置きます。スマホを少し低くして、料理の高さを見せるとボリューム感が出ます。</div>`;
+ }
+ bindOptions();
+}
+function showSell(){answer.innerHTML=`<div class="resultTitle"><strong>完成：唐揚げ販促セット</strong><span class="tag">WOW-01</span></div><div class="preview"><h3>「ザクッ、ジュワッ。今日の一皿。」</h3><p>高級感を残しつつ、衣の立体感と湯気を強調。価格訴求ではなく“食感”を主役に。</p></div><div class="deliver"><div><b>商品画像</b><span>縦長SNS / Twinow兼用の構図案</span></div><div><b>店頭POP</b><span>A4 / 見出し・価格・一言コピー</span></div><div><b>Instagram投稿</b><span>本文＋短いハッシュタグ案</span></div><div><b>Twinow掲載文</b><span>来店理由が伝わる80〜120字</span></div></div><div class="insight">ALIE：相談ではなく、まず“使える完成物”を返しました。気に入らない部分だけ直せます。</div>`}
+function showNow(){answer.innerHTML=`<div class="resultTitle"><strong>今日の集客セット：雨の日14〜17時</strong><span class="tag">WOW-02</span></div><div class="preview"><h3>「雨の午後だけ、揚げたて時間。」</h3><p>値引きではなく、14〜17時限定で“揚げたて優先提供＋小さな追加特典”にして、来店理由を作る。</p></div><div class="deliver"><div><b>Instagram / X画像</b><span>雨粒・湯気・時刻を大きく表示</span></div><div><b>投稿文</b><span>今日だけ・17時終了を明記</span></div><div><b>店頭POP</b><span>入口で3秒で理解できる内容</span></div><div><b>終了条件</b><span>17:00終了 / 数量上限を設定</span></div></div><div class="insight">ALIE：実行するなら、値引き額より“今行く理由”を優先。結果はGrowth Labへ残す。</div>`}
+function showPhoto(){answer.innerHTML=`<div class="resultTitle"><strong>撮影ガイド：料理</strong><span class="tag">WOW-03</span></div><div class="shot"><div class="plate" style="left:64%;top:39%"></div><div class="focus" style="left:66%;top:32%"></div><div class="guide">① 主役を右上の交点　② 左に余白　③ 45°より少し低く</div></div><div class="deliver"><div><b>構図</b><span>三分割。中心置きを避ける</span></div><div><b>高さ</b><span>少し低い目線で厚みを見せる</span></div><div><b>光</b><span>窓を斜め後ろ。天井光だけにしない</span></div><div><b>撮影枚数</b><span>同構図で3枚だけ。角度を変え過ぎない</span></div></div><div class="insight">ALIE：撮った後に直すだけではなく、“撮る前に失敗を減らす”ところまで手伝います。</div>`}
+cards.forEach(c=>c.onclick=()=>{state.mode=c.dataset.mode;render()});render();
+</script>
+</body>
+</html>
