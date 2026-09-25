@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Aifate HUB — Growth Lab Prototype</title>
+<style>
+:root{
+  --bg:#061018;--panel:#0b1722;--panel2:#101e2a;--line:rgba(255,255,255,.09);
+  --text:#edf8ff;--muted:#8da5b7;--cyan:#7ce9ff;--green:#66dfa0;--yellow:#ffd86a;
+  --red:#ff7084;--blue:#7fa8ff;--shadow:0 16px 46px rgba(0,0,0,.34)
+}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:radial-gradient(circle at 80% 0%,rgba(46,126,183,.16),transparent 28%),linear-gradient(180deg,#07111a,#04090e 72%);min-height:100vh}
+button,select{font:inherit}.app{max-width:1440px;margin:0 auto;padding:14px 14px 86px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.brand{display:flex;gap:10px;align-items:center}.orb{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(124,233,255,.55);box-shadow:0 0 22px rgba(124,233,255,.16) inset;color:var(--cyan);font-weight:800}.brand h1{font-size:14px;margin:0;letter-spacing:.08em}.brand p{font-size:10px;color:var(--muted);margin:2px 0 0}.back{color:#cdefff;text-decoration:none;font-size:11px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035)}
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:12px;margin-bottom:12px}.panel{background:linear-gradient(180deg,rgba(15,30,43,.94),rgba(8,18,28,.94));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.hero-main{padding:16px}.eyebrow{font-size:9px;letter-spacing:.17em;color:#7f9cb1;text-transform:uppercase}.title{font-size:22px;font-weight:780;line-height:1.35;margin:5px 0}.sub{color:#9cb0c0;font-size:11px;line-height:1.6}.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.chip{font-size:10px;padding:6px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.035)}.chip.ok{color:#cffff0;border-color:rgba(102,223,160,.25);background:rgba(102,223,160,.07)}.chip.warn{color:#ffe9a3;border-color:rgba(255,216,106,.25);background:rgba(255,216,106,.07)}.chip.todo{color:#d8e5ee}
+.hero-side{padding:14px}.label{font-size:10px;color:var(--muted)}.select{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:11px;background:#09141e;color:var(--text);padding:10px}.statusrow{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}.statusbox{padding:9px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid var(--line)}.statusbox b{font-size:15px;display:block}.statusbox span{font-size:9px;color:var(--muted)}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto;border:1px solid var(--line);background:rgba(255,255,255,.035);color:#aebfcb;padding:9px 12px;border-radius:999px;font-size:10px}.tab.active{color:#eaffff;border-color:rgba(124,233,255,.34);background:rgba(124,233,255,.10)}
+.section{display:none}.section.active{display:block}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{padding:13px}.metric .mname{font-size:10px;color:var(--muted)}.metric .value{font-size:24px;font-weight:800;margin-top:5px}.metric .delta{font-size:10px;margin-top:5px}.up{color:var(--green)}.down{color:var(--red)}.flat{color:#b7c5d0}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.box{padding:14px}.box h2{font-size:13px;margin:0 0 10px}.progress{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}.bar{height:100%;background:linear-gradient(90deg,#7ce9ff,#66dfa0)}.callout{padding:11px;border-radius:12px;border:1px solid rgba(124,233,255,.18);background:rgba(124,233,255,.055);font-size:11px;line-height:1.65}.callout b{color:#dffaff}.sourcegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.source{padding:11px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.03)}.source .st{font-size:10px;color:var(--muted)}.source strong{font-size:12px;display:block;margin-top:4px}.source small{font-size:9px;color:#849bab;display:block;margin-top:4px;line-height:1.4}
+.tablewrap{overflow:auto;border-radius:16px;border:1px solid var(--line);background:rgba(7,17,26,.88)}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.055);text-align:left;font-size:10px}th{position:sticky;top:0;background:#0b1722;color:#91aabd;font-weight:600}.badge{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:9px;border:1px solid var(--line)}.badge.a{color:#dcecff}.badge.b{color:#cffff0;border-color:rgba(102,223,160,.25)}.rank{font-weight:800;font-size:12px}.rank.good{color:var(--green)}.rank.mid{color:var(--yellow)}
+.comparegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.compare{padding:14px}.compare h3{margin:0 0 4px;font-size:13px}.compare p{margin:0 0 12px;color:var(--muted);font-size:10px}.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.055);font-size:10px}.kv:last-child{border-bottom:0}.kv strong{font-size:12px}
+.hypolist{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.hypo{padding:14px}.hypo .id{font-size:9px;color:#7f9cb1}.hypo h3{font-size:13px;margin:5px 0 7px}.hypo p{font-size:10px;color:#9fb1be;line-height:1.55;margin:0 0 10px}.hypo .result{font-size:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid var(--line)}.hypo .next{margin-top:8px;border:1px solid rgba(124,233,255,.28);background:rgba(124,233,255,.07);color:#e7fcff;border-radius:10px;padding:9px 10px;font-size:10px;width:100%}
+.footnote{font-size:9px;color:#71889b;line-height:1.5;margin-top:10px}.mobilebar{position:fixed;left:0;right:0;bottom:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(4,9,14,0),rgba(4,9,14,.96) 32%);display:flex;justify-content:center;z-index:20}.mobilebar button{border:1px solid rgba(124,233,255,.3);background:#0a1823;color:#defaff;border-radius:999px;padding:10px 14px;font-size:10px}
+@media(max-width:860px){.hero,.split,.comparegrid{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}.hypolist{grid-template-columns:1fr}.sourcegrid{grid-template-columns:1fr}.title{font-size:18px}}
+@media(max-width:480px){.app{padding:10px 9px 88px}.topbar{margin-bottom:9px}.back{font-size:9px;padding:7px 8px}.hero-main,.hero-side,.box,.metric,.compare,.hypo{padding:11px}.grid4{gap:7px}.metric .value{font-size:20px}.title{font-size:16px}.brand p{display:none}.statusbox{padding:8px 6px}.statusbox b{font-size:13px}.tab{padding:8px 10px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><div class="orb">A</div><div><h1>AIFATE HUB</h1><p>GROWTH LAB / GOOGLE OBSERVATION</p></div></div>
+    <a class="back" href="./">HOMEへ戻る</a>
+  </div>
+
+  <div class="hero">
+    <section class="panel hero-main">
+      <div class="eyebrow">Active Observation</div>
+      <div class="title">三重県10記事テスト #01</div>
+      <div class="sub">仮説：一次情報・現地写真・強い内部回遊を持つ記事群は、標準記事群より検索露出・回遊・店舗送客が伸びる。</div>
+      <div class="chips">
+        <span class="chip ok">GA4 接続済み</span>
+        <span class="chip warn">Search Console 追加接続</span>
+        <span class="chip todo">AdSense 後段</span>
+        <span class="chip todo">Twinow独自イベント 6種</span>
+      </div>
+    </section>
+    <aside class="panel hero-side">
+      <div class="label">観測セット</div>
+      <select class="select" id="experimentSelect">
+        <option>三重県10記事テスト #01</option>
+        <option>伊勢・画像テスト #02</option>
+        <option>回遊リンク強化 #03</option>
+      </select>
+      <div class="statusrow">
+        <div class="statusbox"><b>10</b><span>対象記事</span></div>
+        <div class="statusbox"><b>7日</b><span>観測期間</span></div>
+        <div class="statusbox"><b>5 / 5</b><span>A / B</span></div>
+      </div>
+    </aside>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview">観測</button>
+    <button class="tab" data-tab="compare">比較</button>
+    <button class="tab" data-tab="articles">記事</button>
+    <button class="tab" data-tab="hypotheses">仮説ログ</button>
+  </nav>
+
+  <section class="section active" id="overview">
+    <div class="grid4">
+      <div class="panel metric"><div class="mname">Google表示回数</div><div class="value">18,920</div><div class="delta up">+31.7%</div></div>
+      <div class="panel metric"><div class="mname">平均掲載順位</div><div class="value">9.7</div><div class="delta up">16.8 → 9.7</div></div>
+      <div class="panel metric"><div class="mname">回遊率</div><div class="value">34.2%</div><div class="delta up">+8.4pt</div></div>
+      <div class="panel metric"><div class="mname">店舗遷移</div><div class="value">96</div><div class="delta up">+23.1%</div></div>
+    </div>
+    <div class="split">
+      <div class="panel box">
+        <h2>観測進捗</h2>
+        <div class="progress"><div class="bar" style="width:71%"></div></div>
+        <div class="sub" style="margin-top:8px">Day 5 / 7　Search Console確定データはD-3までを採用</div>
+        <div class="callout" style="margin-top:12px"><b>途中所見</b><br>現地取材あり群は表示回数・CTR・回遊率がすべて上。まだ7日未満なので結論は保留。次の判断点はD+7。</div>
+      </div>
+      <div class="panel box">
+        <h2>データソース</h2>
+        <div class="sourcegrid">
+          <div class="source"><div class="st">Google Analytics</div><strong>接続済み</strong><small>PV / users / sessions / engagement / custom events</small></div>
+          <div class="source"><div class="st">Search Console</div><strong>接続追加</strong><small>query / page / impressions / clicks / CTR / position</small></div>
+          <div class="source"><div class="st">HUB Master</div><strong>有効</strong><small>地域 / 取材有無 / 実験ID / 記事分類 / 公開日</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="compare">
+    <div class="comparegrid">
+      <div class="panel compare">
+        <h3>A群：AI調査中心</h3><p>5記事 / 標準生成</p>
+        <div class="kv"><span>Google表示回数</span><strong>12,450</strong></div>
+        <div class="kv"><span>平均掲載順位</span><strong>16.8</strong></div>
+        <div class="kv"><span>CTR</span><strong>3.1%</strong></div>
+        <div class="kv"><span>回遊率</span><strong>21.0%</strong></div>
+        <div class="kv"><span>店舗遷移</span><strong>38</strong></div>
+      </div>
+      <div class="panel compare">
+        <h3>B群：現地取材＋独自写真</h3><p>5記事 / 一次情報強化</p>
+        <div class="kv"><span>Google表示回数</span><strong class="up">18,920</strong></div>
+        <div class="kv"><span>平均掲載順位</span><strong class="up">9.7</strong></div>
+        <div class="kv"><span>CTR</span><strong class="up">5.4%</strong></div>
+        <div class="kv"><span>回遊率</span><strong class="up">34.2%</strong></div>
+        <div class="kv"><span>店舗遷移</span><strong class="up">96</strong></div>
+      </div>
+    </div>
+    <div class="panel box" style="margin-top:10px">
+      <h2>響の観測メモ（サンプル）</h2>
+      <div class="callout">B群が全指標で上回っています。ただし観測5日目で母数も少ないため「勝ち」とは確定しません。D+7で一次判定、D+30で再評価。次の実験では「現地取材」と「独自写真」を分離して、どちらが寄与したか確認するのが妥当です。</div>
+    </div>
+  </section>
+
+  <section class="section" id="articles">
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>記事</th><th>群</th><th>地域</th><th>表示</th><th>CTR</th><th>順位</th><th>回遊率</th><th>店舗遷移</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr><td>伊勢のお参りに、甘いひと休み。赤福餅</td><td><span class="badge b">B</span></td><td>伊勢市</td><td>4,420</td><td>6.1%</td><td><span class="rank good">6.8</span></td><td>38%</td><td>31</td><td class="up">上昇</td></tr>
+          <tr><td>伊勢神宮のあと、どこへ行く？</td><td><span class="badge b">B</span></td><td>伊勢市</td><td>3,860</td><td>5.8%</td><td><span class="rank good">8.2</span></td><td>36%</td><td>24</td><td class="up">上昇</td></tr>
+          <tr><td>伊勢うどんを食べるなら</td><td><span class="badge b">B</span></td><td>伊勢市</td><td>3,120</td><td>5.2%</td><td><span class="rank good">9.5</span></td><td>33%</td><td>18</td><td class="up">上昇</td></tr>
+          <tr><td>雨の日の伊勢観光</td><td><span class="badge b">B</span></td><td>伊勢市</td><td>2,940</td><td>4.9%</td><td><span class="rank mid">11.3</span></td><td>31%</td><td>13</td><td class="up">上昇</td></tr>
+          <tr><td>伊勢のお土産10選</td><td><span class="badge b">B</span></td><td>伊勢市</td><td>2,580</td><td>5.0%</td><td><span class="rank mid">12.7</span></td><td>33%</td><td>10</td><td class="flat">観測</td></tr>
+          <tr><td>鈴鹿カフェ特集</td><td><span class="badge a">A</span></td><td>鈴鹿市</td><td>2,940</td><td>3.3%</td><td><span class="rank mid">15.4</span></td><td>23%</td><td>11</td><td class="flat">観測</td></tr>
+          <tr><td>津ランチ候補</td><td><span class="badge a">A</span></td><td>津市</td><td>2,520</td><td>3.0%</td><td><span class="rank mid">17.2</span></td><td>20%</td><td>9</td><td class="flat">観測</td></tr>
+          <tr><td>四日市の買い物スポット</td><td><span class="badge a">A</span></td><td>四日市市</td><td>2,410</td><td>3.2%</td><td><span class="rank mid">16.9</span></td><td>22%</td><td>8</td><td class="flat">観測</td></tr>
+          <tr><td>松阪で食べたいもの</td><td><span class="badge a">A</span></td><td>松阪市</td><td>2,180</td><td>2.9%</td><td><span class="rank mid">18.1</span></td><td>19%</td><td>6</td><td class="down">弱い</td></tr>
+          <tr><td>鳥羽の半日モデルコース</td><td><span class="badge a">A</span></td><td>鳥羽市</td><td>2,400</td><td>3.1%</td><td><span class="rank mid">16.4</span></td><td>21%</td><td>4</td><td class="flat">観測</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="footnote">※ 数値は画面構成確認用のサンプル。実装時はGA4 / Search Console / HUB記事マスタをURL・article_idで結合し、日次集計を保存する。</div>
+  </section>
+
+  <section class="section" id="hypotheses">
+    <div class="hypolist">
+      <div class="panel hypo"><div class="id">MIE-001</div><h3>現地取材は検索・回遊を押し上げるか</h3><p>一次情報・現地写真を持つ記事群と、AI調査中心の記事群を比較。</p><div class="result">現在：B群優勢 / まだ未確定</div><button class="next">D+7で一次判定</button></div>
+      <div class="panel hypo"><div class="id">MIE-002</div><h3>大画像＋独自写真でCTRは上がるか</h3><p>アイキャッチ仕様を固定し、画像要因だけを比較できるようにする。</p><div class="result">次候補：伊勢5記事</div><button class="next">次の観測候補へ</button></div>
+      <div class="panel hypo"><div class="id">MIE-003</div><h3>周遊リンク網は記事寿命を伸ばすか</h3><p>伊勢神宮→赤福→伊勢うどん→土産→周辺観光の回遊群を作る。</p><div class="result">準備中：内部リンク設計</div><button class="next">対象記事を選ぶ</button></div>
+      <div class="panel hypo"><div class="id">GOOGLE-004</div><h3>Preferred Sources導線は効くか</h3><p>利用条件を満たす場合のみ、追加導線をテストし、流入・再訪への影響を見る。</p><div class="result">条件確認が必要</div><button class="next">検証条件を見る</button></div>
+      <div class="panel hypo"><div class="id">GOOGLE-005</div><h3>Search / Discover / Lensを分けて観測</h3><p>通常検索だけでなく、画像・マルチモーダル・Discover系の露出を別軸で追う。</p><div class="result">Search Console接続後</div><button class="next">接続要件を見る</button></div>
+      <div class="panel hypo"><div class="id">REV-006</div><h3>ReViewMo連携で次行動は増えるか</h3><p>記事→響/愛菜→関連記事・店舗・商品への遷移をTwinow固有イベントで観測。</p><div class="result">GA4 custom eventで取得可能</div><button class="next">イベント定義を見る</button></div>
+    </div>
+  </section>
+</div>
+<div class="mobilebar"><button id="newExperiment">＋ 新しい観測を作る</button></div>
+<script>
+const tabs=[...document.querySelectorAll('.tab')];
+const sections=[...document.querySelectorAll('.section')];
+tabs.forEach(btn=>btn.addEventListener('click',()=>{
+  tabs.forEach(x=>x.classList.remove('active')); sections.forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active'); document.getElementById(btn.dataset.tab).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+document.getElementById('newExperiment').addEventListener('click',()=>{
+  alert('プロトタイプ：次は「観測名 / 媒体 / 地域 / 対象記事 / 期間 / 仮説 / 比較条件」を固定する作成シートを追加します。');
+});
+document.querySelectorAll('.next').forEach(b=>b.addEventListener('click',()=>alert('プロトタイプ：このアクションは次版で編集シートへ接続します。')));
+</script>
+</body>
+</html>
